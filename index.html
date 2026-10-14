@@ -797,8 +797,9 @@ function placeStamp(type, x, y) {
 // ================================================================
 // その位置にある一番手前の図形を返す
 function pickShape(px, py) {
-  for (let i = shapes.length - 1; i >= 0; i--) {
-    const s = shapes[i];
+  const order = drawOrder();   // 見た目で一番上にあるものから探す
+  for (let i = order.length - 1; i >= 0; i--) {
+    const s = order[i];
     if (isInside(s, px, py) || distToShape(s, px, py) <= 22) return s;
   }
   return null;
@@ -1111,6 +1112,17 @@ function clearAll() {
 // ================================================================
 //  描画メイン
 // ================================================================
+// 描く順番（下から）。後から壁を引いても、手すりや段差が壁の下に隠れないようにする
+const LAYER = {
+  room: 0, wall: 1, swing_door: 2, sliding_door: 2, stamp: 3, wheelchair_circle: 3,
+  step: 4, handrail: 4, dimension: 4, hazard: 5, text: 5,
+};
+
+function drawOrder() {
+  // 同じ層の中は置いた順（sort は安定ソート）
+  return [...shapes].sort((a, b) => (LAYER[a.type] ?? 4) - (LAYER[b.type] ?? 4));
+}
+
 function redraw() {
   if (selected && !shapes.includes(selected)) selected = null;   // 消去・元に戻すで無くなった場合
   ctx.fillStyle = sketchMode ? '#FDF6E3' : '#FAFAF0';
@@ -1118,7 +1130,7 @@ function redraw() {
   drawUnderlay(ctx);
   if (sketchMode) drawSketchPaper(ctx, CANVAS_W, CANVAS_H);
   else drawGrid(ctx, CANVAS_W, CANVAS_H);
-  shapes.forEach(s => renderShape(ctx, s));
+  drawOrder().forEach(s => renderShape(ctx, s));
   drawSelection(ctx);
   if (drawing) renderPreview();
   scheduleAutosave();
@@ -1204,23 +1216,32 @@ function renderShape(c, s) {
       else { c.beginPath(); c.moveTo(s.x1, s.y1); c.lineTo(s.x2, s.y2); c.stroke(); }
       break;
 
-    /* ── 手すり ── */
-    case 'handrail':
-      c.strokeStyle = '#5577AA';
-      c.lineWidth = 3;
-      if (sketchMode) {
-        sketchLine(c, s.x1, s.y1, s.x2, s.y2);
-      } else {
-        c.setLineDash([10, 5]);
+    /* ── 手すり（壁に重ねても見えるよう、白い縁取りを付ける）── */
+    case 'handrail': {
+      const seg = () => {
+        if (sketchMode) { sketchLine(c, s.x1, s.y1, s.x2, s.y2); return; }
         c.beginPath();
         c.moveTo(s.x1, s.y1); c.lineTo(s.x2, s.y2);
         c.stroke();
-        c.setLineDash([]);
-      }
-      c.fillStyle = '#4466AA';
+      };
+      // 縁取りも点線にして、点の間からは下の壁が見えるようにする（壁が途切れて見えない）。
+      // 端を丸くすると太い縁取りが隙間を埋めてしまうので、端は四角にする
+      if (!sketchMode) { c.setLineDash([10, 6]); c.lineCap = 'butt'; }
+      c.strokeStyle = '#FFFFFF';
+      c.lineWidth = 7;
+      seg();
+      c.strokeStyle = '#1F6FD1';
+      c.lineWidth = 3.5;
+      seg();
+      c.setLineDash([]);
+      const mx = (s.x1+s.x2)/2, my = (s.y1+s.y2)/2;
       c.font = 'bold 10px Hiragino Sans, sans-serif';
-      c.fillText('手すり', (s.x1+s.x2)/2+5, (s.y1+s.y2)/2 - 7);
+      c.fillStyle = 'rgba(255,255,255,0.9)';
+      c.fillRect(mx+3, my-18, c.measureText('手すり').width+4, 14);
+      c.fillStyle = '#1A56A8';
+      c.fillText('手すり', mx+5, my-7);
       break;
+    }
 
     /* ── 段差 ── */
     case 'step': {
@@ -1950,7 +1971,7 @@ function exportPNG() {
   // 全シェイプを書き込む (ctx を一時差し替え)
   const savedCtx = ctx;
   ctx = ec_ctx;
-  shapes.forEach(s => renderShape(ec_ctx, s));
+  drawOrder().forEach(s => renderShape(ec_ctx, s));
   ctx = savedCtx;
 
   // スケールバー（右下）
