@@ -7,4 +7,4 @@
 - 描いた図は、使っている端末の中にだけ保存されます（このページやGitHubには送られません）
 - iPad（指・Apple Pencil）でも使えます
 
-開く: https://sanolapislazuli-hash.github.io/madori-tool/
+開く: https://reha-tools.github.io/madori-tool/
