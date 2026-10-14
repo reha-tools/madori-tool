@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>家屋調査 間取り図ツール</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  background: #1e1e2e;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ── 上部バー ── */
+#topbar {
+  background: #252535;
+  border-bottom: 1px solid #3a3a55;
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+#topbar h1 { color: #cdd6f4; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.sep { width: 1px; height: 22px; background: #3a3a55; flex-shrink: 0; }
+
+.tb-btn {
+  background: #313244;
+  color: #cdd6f4;
+  border: 1px solid #45475a;
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+.tb-btn:hover { background: #45475a; }
+.tb-btn.green { background: #1e4e38; border-color: #2d9f72; color: #a8e6c8; }
+.tb-btn.green:hover { background: #2d6e4e; }
+.tb-btn.red { background: #4e1e1e; border-color: #9f2d2d; color: #e6a8a8; }
+
+.tb-label { color: #a6adc8; font-size: 11px; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.tb-label select, .tb-label input[type="checkbox"] {
+  background: #313244; color: #cdd6f4;
+  border: 1px solid #45475a; border-radius: 3px;
+  padding: 2px 4px; font-size: 11px; cursor: pointer;
+}
+
+/* ── メインレイアウト ── */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── パレット ── */
+#palette {
+  width: 140px;
+  background: #252535;
+  border-right: 1px solid #3a3a55;
+  overflow-y: auto;
+  padding: 6px 5px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.pal-section {
+  grid-column: 1 / -1;
+  font-size: 8px; color: #6c7086;
+  text-align: center; padding: 5px 0 2px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pal-btn {
+  background: #313244;
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  padding: 5px 2px;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: all 0.12s; width: 100%;
+}
+.pal-btn:hover { background: #3d3d5c; }
+.pal-btn.active { background: #1e4080; border-color: #89b4fa; }
+.pal-btn .ico { font-size: 15px; line-height: 1.2; }
+.pal-btn .lbl { color: #bac2de; font-size: 8.5px; line-height: 1.1; }
+
+/* ── キャンバスエリア ── */
+#canvas-wrap {
+  flex: 1; overflow: auto;
+  background: #181825;
+  position: relative;
+}
+#drawCanvas { display: block; cursor: crosshair; touch-action: none; }
+
+/* ── iPad など指で操作する端末 ── */
+.tb-btn, .pal-btn, .tb-label { touch-action: manipulation; }
+@media (pointer: coarse) {
+  .tb-btn { padding: 7px 12px; font-size: 13px; }
+  .pal-btn { padding: 7px 2px; }
+}
+
+/* ── スケールバー ── */
+#scalebar {
+  position: absolute; bottom: 10px; right: 12px;
+  background: rgba(37,37,53,0.9);
+  border: 1px solid #45475a; border-radius: 4px;
+  padding: 3px 10px; color: #a6adc8; font-size: 10px;
+  pointer-events: none;
+}
+
+/* ── ヘルプパネル ── */
+#help-panel {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 200;
+  align-items: center; justify-content: center;
+}
+#help-panel.show { display: flex; }
+#help-box {
+  background: #252535; border: 1px solid #45475a; border-radius: 10px;
+  padding: 20px 24px; max-width: 520px; width: 90%; color: #cdd6f4;
+  max-height: 90vh; overflow-y: auto;
+}
+#help-box h2 { margin-bottom: 12px; font-size: 15px; color: #89b4fa; }
+#help-box table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#help-box td { padding: 4px 8px; border-bottom: 1px solid #3a3a55; }
+#help-box td:first-child { color: #89b4fa; font-weight: 600; width: 100px; }
+#help-box .close-btn {
+  margin-top: 14px; display: block; text-align: center;
+  background: #313244; border: 1px solid #45475a; border-radius: 5px;
+  padding: 7px; cursor: pointer; color: #cdd6f4; font-size: 12px;
+}
+</style>
+</head>
+<body>
+
+<!-- 上部バー -->
+<div id="topbar">
+  <h1>🏠 家屋調査 間取り図</h1>
+  <div class="sep"></div>
+  <button class="tb-btn" onclick="document.getElementById('drawingFile').click()" title="保存した間取り図（.json）を開いて続きを編集する">📂 開く</button>
+  <input type="file" id="drawingFile" accept=".json,application/json" style="display:none">
+  <button class="tb-btn" onclick="saveDrawing()" title="あとで続きを編集できる形式（.json）で保存する（Ctrl+S）">💾 保存</button>
+  <div class="sep"></div>
+  <button class="tb-btn" onclick="undoLast()" title="Ctrl+Z">↩ 元に戻す</button>
+  <button class="tb-btn red" onclick="clearAll()">🗑 全消去</button>
+  <div class="sep"></div>
+  <label class="tb-label">
+    <input type="checkbox" id="snapCb" checked> グリッド吸着
+  </label>
+  <label class="tb-label">
+    スケール:
+    <select id="scaleSel">
+      <option value="20">1マス=50cm</option>
+      <option value="40" selected>1マス=1m</option>
+      <option value="80">1マス=2m</option>
+    </select>
+  </label>
+  <div class="sep"></div>
+  <button class="tb-btn" onclick="zoomBy(1 / 1.25)" title="表示を縮小">－</button>
+  <span class="tb-label" id="zoomLabel">100%</span>
+  <button class="tb-btn" onclick="zoomBy(1.25)" title="表示を拡大">＋</button>
+  <button class="tb-btn" onclick="zoomFit()" title="図の全体を画面に収める">全体</button>
+  <div class="sep"></div>
+  <button class="tb-btn" onclick="document.getElementById('underlayFile').click()" title="スキャンアプリで書き出した間取り図の画像を下絵にする（ドラッグ＆ドロップ・貼り付けも可）">🖼 下絵を読込</button>
+  <input type="file" id="underlayFile" accept="image/*" style="display:none">
+  <span id="underlayTools" style="display:none">
+    <button class="tb-btn" onclick="startCalibrate()" title="長さの分かっている壁をなぞって、下絵の縮尺を合わせる">📏 縮尺合わせ</button>
+    <label class="tb-label">下絵の濃さ <input type="range" id="underlayAlpha" min="10" max="100" value="60"></label>
+    <button class="tb-btn red" onclick="removeUnderlay()">✖ 下絵を消す</button>
+  </span>
+  <div class="sep"></div>
+  <button id="sketchBtn" class="tb-btn" onclick="toggleSketch()" title="手書き風スタイルに切り替え">✏️ スケッチ風</button>
+  <button class="tb-btn green" onclick="exportPNG()">📥 PNG保存</button>
+  <button class="tb-btn" onclick="document.getElementById('help-panel').classList.add('show')">? 使い方</button>
+</div>
+
+<!-- メイン -->
+<div id="main">
+
+  <!-- パレット -->
+  <div id="palette">
+    <div class="pal-section">壁・床</div>
+    <button class="pal-btn active" data-tool="wall" onclick="setTool(this)">
+      <span class="ico">━</span><span class="lbl">壁</span>
+    </button>
+    <button class="pal-btn" data-tool="room" onclick="setTool(this)">
+      <span class="ico">⬜</span><span class="lbl">部屋</span>
+    </button>
+    <button class="pal-btn" data-tool="step" onclick="setTool(this)">
+      <span class="ico">≡</span><span class="lbl">段差</span>
+    </button>
+    <button class="pal-btn" data-tool="handrail" onclick="setTool(this)">
+      <span class="ico">╌</span><span class="lbl">手すり</span>
+    </button>
+
+    <div class="pal-section">建具</div>
+    <button class="pal-btn" data-tool="swing_door" onclick="setTool(this)">
+      <span class="ico">🚪</span><span class="lbl">開き戸</span>
+    </button>
+    <button class="pal-btn" data-tool="sliding_door" onclick="setTool(this)">
+      <span class="ico">⊟</span><span class="lbl">引き戸</span>
+    </button>
+
+    <div class="pal-section">設備</div>
+    <button class="pal-btn" data-tool="toilet" onclick="setTool(this)">
+      <span class="ico">🚽</span><span class="lbl">便座</span>
+    </button>
+    <button class="pal-btn" data-tool="bath" onclick="setTool(this)">
+      <span class="ico">🛁</span><span class="lbl">浴槽</span>
+    </button>
+    <button class="pal-btn" data-tool="sink" onclick="setTool(this)">
+      <span class="ico">💧</span><span class="lbl">洗面台</span>
+    </button>
+    <button class="pal-btn" data-tool="kitchen" onclick="setTool(this)">
+      <span class="ico">🍳</span><span class="lbl">キッチン</span>
+    </button>
+    <button class="pal-btn" data-tool="washer" onclick="setTool(this)">
+      <span class="ico">🧺</span><span class="lbl">洗濯機</span>
+    </button>
+    <button class="pal-btn" data-tool="fridge" onclick="setTool(this)">
+      <span class="ico">🧊</span><span class="lbl">冷蔵庫</span>
+    </button>
+    <button class="pal-btn" data-tool="stairs" onclick="setTool(this)">
+      <span class="ico">🪜</span><span class="lbl">階段</span>
+    </button>
+    <button class="pal-btn" data-tool="getabako" onclick="setTool(this)">
+      <span class="ico">👞</span><span class="lbl">下駄箱</span>
+    </button>
+
+    <div class="pal-section">家具</div>
+    <button class="pal-btn" data-tool="bed" onclick="setTool(this)">
+      <span class="ico">🛏</span><span class="lbl">ベッド</span>
+    </button>
+    <button class="pal-btn" data-tool="futon" onclick="setTool(this)">
+      <span class="ico">💤</span><span class="lbl">布団</span>
+    </button>
+    <button class="pal-btn" data-tool="chair" onclick="setTool(this)">
+      <span class="ico">🪑</span><span class="lbl">椅子</span>
+    </button>
+    <button class="pal-btn" data-tool="table" onclick="setTool(this)">
+      <span class="ico">🍽</span><span class="lbl">テーブル</span>
+    </button>
+    <button class="pal-btn" data-tool="sofa" onclick="setTool(this)">
+      <span class="ico">🛋</span><span class="lbl">ソファ</span>
+    </button>
+    <button class="pal-btn" data-tool="kotatsu" onclick="setTool(this)">
+      <span class="ico">🍊</span><span class="lbl">こたつ</span>
+    </button>
+    <button class="pal-btn" data-tool="storage" onclick="setTool(this)">
+      <span class="ico">🗄</span><span class="lbl">タンス</span>
+    </button>
+    <button class="pal-btn" data-tool="butsudan" onclick="setTool(this)">
+      <span class="ico">🕯</span><span class="lbl">仏壇</span>
+    </button>
+
+    <div class="pal-section">福祉用具</div>
+    <button class="pal-btn" data-tool="wheelchair" onclick="setTool(this)">
+      <span class="ico">♿</span><span class="lbl">車いす</span>
+    </button>
+    <button class="pal-btn" data-tool="ptoilet" onclick="setTool(this)">
+      <span class="ico">🚽</span><span class="lbl">Pトイレ</span>
+    </button>
+    <button class="pal-btn" data-tool="showerchair" onclick="setTool(this)">
+      <span class="ico">🚿</span><span class="lbl">シャワー椅子</span>
+    </button>
+
+    <div class="pal-section">注釈</div>
+    <button class="pal-btn" data-tool="text" onclick="setTool(this)">
+      <span class="ico">Ａ</span><span class="lbl">テキスト</span>
+    </button>
+    <button class="pal-btn" data-tool="dimension" onclick="setTool(this)">
+      <span class="ico">↔</span><span class="lbl">寸法線</span>
+    </button>
+    <button class="pal-btn" data-tool="hazard" onclick="setTool(this)">
+      <span class="ico">⚠</span><span class="lbl">注意</span>
+    </button>
+
+    <div class="pal-section">編集</div>
+    <button class="pal-btn" data-tool="move" onclick="setTool(this)">
+      <span class="ico">✥</span><span class="lbl">移動</span>
+    </button>
+    <button class="pal-btn" data-tool="eraser" onclick="setTool(this)">
+      <span class="ico">⌫</span><span class="lbl">消去</span>
+    </button>
+  </div>
+
+  <!-- キャンバスエリア -->
+  <div id="canvas-wrap">
+    <canvas id="drawCanvas"></canvas>
+    <div id="scalebar">1マス = <span id="scaleLabel">1m</span> ｜ Ctrl+Z: 元に戻す<span id="underlayStatus"></span></div>
+  </div>
+</div>
+
+<!-- ヘルプパネル -->
+<div id="help-panel">
+  <div id="help-box">
+    <h2>🏠 家屋調査 間取り図ツール — 使い方</h2>
+    <table>
+      <tr><td>壁</td><td>ドラッグで壁線を引く（太線）</td></tr>
+      <tr><td>部屋</td><td>ドラッグで部屋の矩形を描く。放すと部屋名を入力</td></tr>
+      <tr><td>段差</td><td>ドラッグで段差ラインを引く。放すと高さ入力（例: 15cm）</td></tr>
+      <tr><td>手すり</td><td>ドラッグで手すり位置を示す破線を引く</td></tr>
+      <tr><td>開き戸</td><td>蝶番位置からドラッグして扉の向きを決める</td></tr>
+      <tr><td>引き戸</td><td>ドラッグで引き戸の幅を指定</td></tr>
+      <tr><td>設備・家具</td><td>クリックで配置。右クリックで90°回転。移動ツールで向き・大きさも変えられる</td></tr>
+      <tr><td>テキスト</td><td>クリックしてテキストを入力</td></tr>
+      <tr><td>寸法線</td><td>ドラッグで寸法を引く。放すと数値入力</td></tr>
+      <tr><td>注意</td><td>クリックで危険マーカーを配置</td></tr>
+      <tr><td>移動</td><td>設備や図形をドラッグして動かす。選んだ設備は、上の○で向き、四隅の□で大きさを変えられる。右クリックで90°回転、ダブルクリックで寸法を数値入力（縮尺合わせ後）</td></tr>
+      <tr><td>消去</td><td>ドラッグしてなぞった要素を消す</td></tr>
+      <tr><td>下絵を読込</td><td>スキャンした間取り図の画像（PNG・JPEG）を下に敷く。ドラッグ＆ドロップ・貼り付けも可</td></tr>
+      <tr><td>縮尺合わせ</td><td>長さの分かる壁をなぞって実寸を入力。以後、寸法線が自動計測され、設備は実寸で置かれる</td></tr>
+      <tr><td>PNG保存</td><td>右上ボタンで画像としてダウンロード</td></tr>
+      <tr><td>開く・保存</td><td>「保存」で続きを編集できるファイル（.json）を書き出し、「開く」で読み込む。iPadで描いてパソコンで仕上げるときに使う</td></tr>
+      <tr><td>自動保存</td><td>描きかけの図はこの端末のブラウザに自動で残り、次に開いたとき続きから描ける</td></tr>
+      <tr><td>表示の拡大</td><td>－／＋／全体ボタン。iPadでは2本指でつまんで拡大縮小、2本指でなぞってスクロール</td></tr>
+      <tr><td>iPad</td><td>指やApple Pencilで描ける。寸法の数値入力はダブルクリックの代わりにダブルタップ</td></tr>
+      <tr><td>Ctrl+Z</td><td>元に戻す（50回まで）</td></tr>
+    </table>
+    <button class="close-btn" onclick="document.getElementById('help-panel').classList.remove('show')">閉じる</button>
+  </div>
+</div>
+
+<script>
+// ================================================================
+//  定数・状態
+// ================================================================
+const CANVAS_W = 1600;
+const CANVAS_H = 1100;
+
+let shapes   = [];
+let undoStack = [];
+let currentTool = 'wall';
+let drawing  = false;
+let startX = 0, startY = 0, curX = 0, curY = 0;
+let gridSize = 40;
+let snapOn   = true;
+let sketchMode = false;
+let underlay = null;        // スキャンした間取り図の下絵 { img, x, y, w, h }
+let underlayAlpha = 0.6;
+let pxPerM = 40;            // 1mあたりのピクセル数（下絵の縮尺合わせで変わる）
+let calibrated = false;
+let moving = null;          // 移動ツールで掴んでいる図形 { shape, mode, x, y, moved }
+let selected = null;        // 移動ツールで選択中の図形（ハンドルを表示）
+let pendingTap = null;      // 設備・テキスト・注意は指を離したときに置く
+let canvas, ctx;
+
+// ================================================================
+//  初期化
+// ================================================================
+window.addEventListener('load', () => {
+  canvas = document.getElementById('drawCanvas');
+  canvas.width  = CANVAS_W;
+  canvas.height = CANVAS_H;
+  ctx = canvas.getContext('2d');
+
+  // マウス・指・Apple Pencil を Pointer Events でまとめて受ける
+  canvas.addEventListener('pointerdown',   onPointerDown);
+  canvas.addEventListener('pointermove',   onPointerMove);
+  canvas.addEventListener('pointerup',     onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerCancel);
+  canvas.addEventListener('contextmenu', onRightClick);
+  canvas.addEventListener('dblclick', e => { if (lastPointerType === 'mouse') onDblClick(e); });
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undoLast(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveDrawing(); }
+  });
+
+  document.getElementById('snapCb').addEventListener('change', e => { snapOn = e.target.checked; });
+  document.getElementById('scaleSel').addEventListener('change', e => {
+    updateGrid();
+    const map = { '20':'50cm', '40':'1m', '80':'2m' };
+    document.getElementById('scaleLabel').textContent = map[e.target.value];
+    redraw();
+  });
+
+  // 下絵: ファイル選択・ドラッグ＆ドロップ・貼り付け
+  document.getElementById('underlayFile').addEventListener('change', e => {
+    loadUnderlayFile(e.target.files[0]);
+    e.target.value = '';
+  });
+  document.getElementById('underlayAlpha').addEventListener('input', e => {
+    underlayAlpha = e.target.value / 100;
+    redraw();
+  });
+  const wrap = document.getElementById('canvas-wrap');
+  wrap.addEventListener('dragover', e => e.preventDefault());
+  wrap.addEventListener('drop', e => {
+    e.preventDefault();
+    loadUnderlayFile(e.dataTransfer.files[0]);
+  });
+  document.addEventListener('paste', e => {
+    const item = [...e.clipboardData.items].find(i => i.type.startsWith('image/'));
+    if (item) loadUnderlayFile(item.getAsFile());
+  });
+
+  // 保存した図を開く
+  document.getElementById('drawingFile').addEventListener('change', e => {
+    loadDrawingFile(e.target.files[0]);
+    e.target.value = '';
+  });
+  // 別のアプリ（カメラなど）に切り替えたら、すぐ自動保存する
+  document.addEventListener('visibilitychange', () => { if (document.hidden) autosaveNow(); });
+
+  redraw();
+  if (COARSE) zoomFit();
+  restoreAutosave();
+});
+
+// ================================================================
+//  ツール選択
+// ================================================================
+function setTool(btn) {
+  document.querySelectorAll('.pal-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTool = btn.dataset.tool;
+  selected = null;
+  canvas.style.cursor = currentTool === 'move' ? 'move' : '';
+  updateUnderlayStatus();
+  redraw();
+}
+
+// ================================================================
+//  座標ヘルパー
+// ================================================================
+function getMouse(e, raw) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width  / rect.width;
+  const sy = canvas.height / rect.height;
+  let x = (e.clientX - rect.left) * sx;
+  let y = (e.clientY - rect.top)  * sy;
+  if (snapOn && !raw && currentTool !== 'calibrate') {
+    x = Math.round(x / gridSize) * gridSize;
+    y = Math.round(y / gridSize) * gridSize;
+  }
+  return { x, y };
+}
+
+// ================================================================
+//  マウスハンドラ
+// ================================================================
+const STAMP_TOOLS = [
+  'toilet','bath','sink','kitchen','washer','fridge','stairs','getabako',
+  'bed','futon','chair','table','sofa','kotatsu','storage','butsudan',
+  'wheelchair','ptoilet','showerchair',
+];
+
+function onDown(e) {
+  if (e.button !== 0) return;
+  const p = getMouse(e);
+
+  // 移動ツール: 掴む位置は吸着なしで判定し、移動量は吸着に従う
+  if (currentTool === 'move') {
+    const raw = getMouse(e, true);
+    const h = pickHandle(raw.x, raw.y);          // 選択中の設備のハンドルが優先
+    selected = h ? selected : pickShape(raw.x, raw.y);
+    if (selected) {
+      saveUndo();
+      moving = { ...(h || { mode: 'move' }), shape: selected, x: p.x, y: p.y, moved: false };
+    }
+    redraw();
+    return;
+  }
+
+  // 置くだけの道具は、離したときに置く（iPad で2本指の操作と区別するため）
+  if (STAMP_TOOLS.includes(currentTool) || currentTool === 'text' || currentTool === 'hazard') {
+    pendingTap = p;
+    return;
+  }
+
+  drawing = true;
+  startX = curX = p.x;
+  startY = curY = p.y;
+}
+
+function onMove(e) {
+  const p = getMouse(e);
+  curX = p.x; curY = p.y;
+  if (moving) {
+    // 回転は吸着なしの位置で角度を決める
+    dragSelected(moving.mode === 'rotate' ? getMouse(e, true) : p);
+    return;
+  }
+  if (drawing) redraw();
+}
+
+function onUp(e) {
+  if (pendingTap) { const p = pendingTap; pendingTap = null; placeAt(p); return; }
+  if (moving) { endMove(); return; }
+  if (!drawing) return;
+  drawing = false;
+  const p = getMouse(e);
+  curX = p.x; curY = p.y;
+
+  const dx = curX - startX, dy = curY - startY;
+  const dist = Math.hypot(dx, dy);
+
+  if (dist < 5 && currentTool !== 'eraser') { redraw(); return; }
+
+  if (currentTool === 'calibrate') { finishCalibrate(dist); return; }
+
+  saveUndo();
+
+  switch (currentTool) {
+    case 'wall':
+      shapes.push({ type:'wall', x1:startX, y1:startY, x2:curX, y2:curY });
+      break;
+    case 'handrail':
+      shapes.push({ type:'handrail', x1:startX, y1:startY, x2:curX, y2:curY });
+      break;
+    case 'step': {
+      const lbl = prompt('段差の高さを入力（例: 15cm）:') || '';
+      shapes.push({ type:'step', x1:startX, y1:startY, x2:curX, y2:curY, label:lbl });
+      break;
+    }
+    case 'room': {
+      const x = Math.min(startX, curX), y = Math.min(startY, curY);
+      const w = Math.abs(dx), h = Math.abs(dy);
+      const lbl = prompt('部屋名を入力（省略可）:') || '';
+      shapes.push({ type:'room', x, y, w, h, label:lbl });
+      break;
+    }
+    case 'swing_door': {
+      const angle = Math.atan2(dy, dx);
+      const len = Math.min(dist, gridSize * 3);
+      shapes.push({ type:'swing_door', x:startX, y:startY, len, angle });
+      break;
+    }
+    case 'sliding_door':
+      shapes.push({ type:'sliding_door', x1:startX, y1:startY, x2:curX, y2:curY });
+      break;
+    case 'dimension': {
+      // 縮尺合わせ済みなら、なぞった長さを初期値に入れる
+      const lbl = prompt('寸法を入力（例: 80cm、1.2m）:', calibrated ? formatLength(dist) : '') || '';
+      shapes.push({ type:'dimension', x1:startX, y1:startY, x2:curX, y2:curY, text:lbl });
+      break;
+    }
+    case 'eraser':
+      eraseNear(startX, startY, curX, curY);
+      break;
+  }
+
+  redraw();
+}
+
+// 右クリックでスタンプを90°回転
+function onRightClick(e) {
+  e.preventDefault();
+  if (!STAMP_TOOLS.includes(currentTool) && currentTool !== 'move') return;
+  const p = getMouse(e, true);
+  // 最も近いスタンプを回転
+  let best = null, bestDist = 60;
+  shapes.forEach(s => {
+    if (s.type !== 'stamp' && s.type !== 'wheelchair_circle') return;
+    const cx = s.type === 'wheelchair_circle' ? s.x : s.x + s.w / 2;
+    const cy = s.type === 'wheelchair_circle' ? s.y : s.y + s.h / 2;
+    const d = Math.hypot(p.x - cx, p.y - cy);
+    if (d < bestDist) { bestDist = d; best = s; }
+  });
+  // 実寸で大きく置かれた設備は中心から遠くても、上で右クリックすれば回す
+  const under = pickShape(p.x, p.y);
+  if (under && under.type === 'stamp') best = under;
+  if (!best || best.type === 'wheelchair_circle') return;
+  saveUndo();
+  // 中心を保ったまま時計回りに90°（頭側・タンク側の向きも一緒に回る）
+  best.rot = ((best.rot || 0) + 90) % 360;
+  if (currentTool === 'move') selected = best;
+  redraw();
+}
+
+// ダブルクリック: 選択中の設備の寸法を数値で入力
+function onDblClick(e) {
+  const s = selected;
+  if (currentTool !== 'move' || !s || !handlesOf(s).length) return;
+  if (!calibrated) { alert('寸法の数値入力は、下絵を読み込んで縮尺合わせをした後に使えます。'); return; }
+  const k = pxPerM / 100;
+  if (s.type === 'wheelchair_circle') {
+    const cm = parseLengthCm(prompt('円の直径を入力（例: 150cm）:', Math.round(s.r * 2 / k) + 'cm'));
+    if (cm) { saveUndo(); s.r = cm * k / 2; }
+  } else {
+    const input = prompt('幅×長さを cm で入力（例: 100×200）:', `${Math.round(s.w / k)}×${Math.round(s.h / k)}`);
+    const m = String(input || '').normalize('NFKC').match(/(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)/);
+    if (m && m[1] > 0 && m[2] > 0) {
+      saveUndo();
+      const c = stampCenter(s);
+      s.w = m[1] * k; s.h = m[2] * k;
+      s.x = c.x - s.w / 2; s.y = c.y - s.h / 2;
+    } else if (input !== null) {
+      alert('「100×200」のように、幅と長さを入力してください。');
+    }
+  }
+  redraw();
+}
+
+// クリック・タップで置く道具（設備・テキスト・注意）
+function placeAt(p) {
+  if (STAMP_TOOLS.includes(currentTool)) {
+    saveUndo();
+    placeStamp(currentTool, p.x, p.y);
+  } else if (currentTool === 'text') {
+    const txt = prompt('テキストを入力（例: 玄関、段差15cm）:');
+    if (!txt || !txt.trim()) return;
+    saveUndo();
+    shapes.push({ type: 'text', x: p.x, y: p.y, text: txt.trim(), size: 14 });
+  } else if (currentTool === 'hazard') {
+    const txt = prompt('注意内容を入力（例: 段差15cm）:') || '';
+    saveUndo();
+    shapes.push({ type: 'hazard', x: p.x, y: p.y, r: 30, text: txt });
+  }
+  redraw();
+}
+
+// ================================================================
+//  ポインタ入力（マウス・指・Apple Pencil を共通で扱う）
+// ================================================================
+const COARSE = window.matchMedia('(pointer: coarse)').matches;   // iPad など指が主な端末
+const touches = new Map();     // 画面に触れている指 pointerId → {x, y}
+let pinch = null;              // 2本指で拡大縮小・スクロール中 { dist, x, y }
+let penDown = false;           // Apple Pencil で描いている間は手のひらのタッチを無視する
+let lastTap = null;            // ダブルタップ判定用 { t, x, y }
+let lastPointerType = 'mouse';
+
+function onPointerDown(e) {
+  lastPointerType = e.pointerType;
+  if (e.pointerType === 'touch') {
+    if (penDown) return;
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (touches.size >= 2) {
+      // 2本目の指: 描きかけを取り消して、拡大縮小・スクロールに切り替える
+      cancelAction();
+      pinch = pinchCenter();
+      return;
+    }
+  }
+  if (pinch) return;
+  if (e.pointerType === 'pen') penDown = true;
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* 取れなくても描画は続ける */ }
+  onDown(e);
+}
+
+function onPointerMove(e) {
+  if (e.pointerType === 'touch') {
+    if (!touches.has(e.pointerId)) return;   // 無視している手のひらのタッチ
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  }
+  if (pinch) { updatePinch(); return; }
+  onMove(e);
+}
+
+function onPointerUp(e) {
+  if (e.pointerType === 'pen') penDown = false;
+  const wasTracked = touches.delete(e.pointerId);
+  if (pinch) {
+    if (!touches.size) pinch = null;   // 指が全部離れるまで描画には戻らない
+    return;
+  }
+  if (e.pointerType === 'touch' && !wasTracked) return;
+  onUp(e);
+  if (e.pointerType !== 'mouse') detectDoubleTap(e);
+}
+
+function onPointerCancel(e) {
+  if (e.pointerType === 'pen') penDown = false;
+  touches.delete(e.pointerId);
+  if (pinch) { if (!touches.size) pinch = null; return; }
+  cancelAction();
+}
+
+// 描きかけ・掴みかけの操作をなかったことにする
+function cancelAction() {
+  drawing = false;
+  pendingTap = null;
+  if (moving) {
+    const moved = moving.moved;
+    moving = null;
+    if (moved) undoLast(); else undoStack.pop();
+  }
+  redraw();
+}
+
+function pinchCenter() {
+  const [a, b] = [...touches.values()];
+  return { dist: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+function updatePinch() {
+  if (touches.size < 2) return;
+  const now = pinchCenter();
+  const wrap = document.getElementById('canvas-wrap');
+  if (pinch.dist > 0) setZoom(zoom * now.dist / pinch.dist, now.x, now.y);
+  wrap.scrollLeft -= now.x - pinch.x;
+  wrap.scrollTop  -= now.y - pinch.y;
+  pinch = now;
+}
+
+// 指・ペンのダブルタップ（ダブルクリックの代わり）
+function detectDoubleTap(e) {
+  const now = Date.now();
+  if (lastTap && now - lastTap.t < 400 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 25) {
+    lastTap = null;
+    onDblClick(e);
+  } else {
+    lastTap = { t: now, x: e.clientX, y: e.clientY };
+  }
+}
+
+// ================================================================
+//  表示の拡大縮小（図そのものの大きさは変わらない）
+// ================================================================
+let zoom = 1;
+
+function setZoom(z, anchorX, anchorY) {
+  const wrap = document.getElementById('canvas-wrap');
+  const r = wrap.getBoundingClientRect();
+  const ax = (anchorX ?? r.left + wrap.clientWidth / 2) - r.left;
+  const ay = (anchorY ?? r.top + wrap.clientHeight / 2) - r.top;
+  // 基準点の下にある図の位置を保ったまま倍率を変える
+  const cx = (wrap.scrollLeft + ax) / zoom, cy = (wrap.scrollTop + ay) / zoom;
+  zoom = Math.min(3, Math.max(0.15, z));
+  canvas.style.width = CANVAS_W * zoom + 'px';
+  wrap.scrollLeft = cx * zoom - ax;
+  wrap.scrollTop  = cy * zoom - ay;
+  document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+}
+
+function zoomBy(f) {
+  setZoom(zoom * f);
+}
+
+function zoomFit() {
+  const wrap = document.getElementById('canvas-wrap');
+  setZoom(Math.min(wrap.clientWidth / CANVAS_W, wrap.clientHeight / CANVAS_H));
+  wrap.scrollLeft = 0;
+  wrap.scrollTop = 0;
+}
+
+// 画面上の n px がキャンバス上で何 px か（ハンドルを表示倍率によらず同じ大きさに見せる）
+function screenToCanvas(n) {
+  return n * canvas.width / (canvas.getBoundingClientRect().width || canvas.width);
+}
+
+function handleR() {
+  return screenToCanvas(COARSE ? 12 : 7);   // iPad では指で掴める大きさ
+}
+
+// ================================================================
+//  スタンプ配置
+// ================================================================
+// 初期サイズ（cm 相当。幅 w × 奥行 h、h の上側が壁側・頭側）
+const STAMP_DEFAULT = {
+  toilet:      { w: 44,  h: 66 },
+  bath:        { w: 80,  h: 150 },
+  sink:        { w: 55,  h: 55 },
+  kitchen:     { w: 255, h: 65 },
+  washer:      { w: 60,  h: 60 },
+  fridge:      { w: 65,  h: 70 },
+  stairs:      { w: 80,  h: 270 },
+  getabako:    { w: 90,  h: 35 },
+  bed:         { w: 90,  h: 190 },
+  futon:       { w: 100, h: 210 },
+  chair:       { w: 45,  h: 50 },
+  table:       { w: 120, h: 75 },
+  sofa:        { w: 160, h: 85 },
+  kotatsu:     { w: 90,  h: 90 },
+  storage:     { w: 90,  h: 45 },
+  butsudan:    { w: 60,  h: 50 },
+  wheelchair:  { r: 65 },
+  ptoilet:     { w: 55,  h: 65 },
+  showerchair: { w: 45,  h: 50 },
+};
+
+function placeStamp(type, x, y) {
+  const s = STAMP_DEFAULT[type];
+  // 縮尺合わせ済みなら STAMP_DEFAULT を cm とみなして実寸で置く
+  const k = calibrated ? pxPerM / 100 : 1;
+  if (type === 'wheelchair') {
+    shapes.push({ type:'wheelchair_circle', x, y, r: s.r * k });
+  } else {
+    const w = s.w * k, h = s.h * k;
+    shapes.push({ type:'stamp', subtype:type, x: x - w/2, y: y - h/2, w, h });
+  }
+}
+
+// ================================================================
+//  移動
+// ================================================================
+// その位置にある一番手前の図形を返す
+function pickShape(px, py) {
+  for (let i = shapes.length - 1; i >= 0; i--) {
+    const s = shapes[i];
+    if (isInside(s, px, py) || distToShape(s, px, py) <= 22) return s;
+  }
+  return null;
+}
+
+function isInside(s, px, py) {
+  switch (s.type) {
+    case 'stamp': {
+      const l = toLocal(s, px, py);
+      return Math.abs(l.x) <= s.w / 2 && Math.abs(l.y) <= s.h / 2;
+    }
+    case 'wheelchair_circle': case 'hazard':
+      return Math.hypot(px - s.x, py - s.y) <= s.r;
+    case 'text': {
+      const size = s.size || 14;
+      ctx.font = `${size}px Hiragino Sans, sans-serif`;
+      return px >= s.x && px <= s.x + ctx.measureText(s.text).width && py >= s.y - size && py <= s.y + 4;
+    }
+    default:
+      return false;
+  }
+}
+
+function moveShape(s, dx, dy) {
+  if ('x1' in s) { s.x1 += dx; s.y1 += dy; s.x2 += dx; s.y2 += dy; }
+  else { s.x += dx; s.y += dy; }
+}
+
+function endMove() {
+  if (!moving) return;
+  if (!moving.moved) undoStack.pop();   // 掴んだだけなら元に戻す履歴を残さない
+  moving = null;
+}
+
+// 掴んでいる図形を、ハンドルの種類に応じて移動・回転・伸縮する
+function dragSelected(p) {
+  const s = moving.shape, before = JSON.stringify(s);
+  if (moving.mode === 'move') {
+    moveShape(s, p.x - moving.x, p.y - moving.y);
+    moving.x = p.x; moving.y = p.y;
+  } else if (moving.mode === 'rotate') {
+    const c = stampCenter(s);
+    let deg = Math.round(Math.atan2(p.y - c.y, p.x - c.x) * 180 / Math.PI) + 90;
+    const right = Math.round(deg / 90) * 90;
+    if (Math.abs(deg - right) <= 6) deg = right;   // 直角の近くでは吸い付く
+    s.rot = ((deg % 360) + 360) % 360;
+  } else if (moving.mode === 'resize') {
+    resizeStamp(s, moving.sx, moving.sy, p);
+  } else if (moving.mode === 'radius') {
+    s.r = Math.max(10, Math.hypot(p.x - s.x, p.y - s.y));
+  }
+  if (JSON.stringify(s) === before) return;
+  moving.moved = true;
+  redraw();
+}
+
+// ── 設備（スタンプ）の向きと大きさ ──
+function stampCenter(s) {
+  return { x: s.x + s.w / 2, y: s.y + s.h / 2 };
+}
+
+// 画面上の点を、設備の中心を原点にして回転を打ち消した座標に直す
+function toLocal(s, px, py) {
+  const c = stampCenter(s), a = -(s.rot || 0) * Math.PI / 180;
+  const dx = px - c.x, dy = py - c.y;
+  return { x: dx * Math.cos(a) - dy * Math.sin(a), y: dx * Math.sin(a) + dy * Math.cos(a) };
+}
+
+function toWorld(s, lx, ly) {
+  const c = stampCenter(s), a = (s.rot || 0) * Math.PI / 180;
+  return { x: c.x + lx * Math.cos(a) - ly * Math.sin(a), y: c.y + lx * Math.sin(a) + ly * Math.cos(a) };
+}
+
+// 回転後の見た目の高さの半分（ラベルを下に置く位置決め用）
+function stampHalfHeight(s) {
+  const a = (s.rot || 0) * Math.PI / 180;
+  return Math.abs(s.w / 2 * Math.sin(a)) + Math.abs(s.h / 2 * Math.cos(a));
+}
+
+// 対角の角を固定して、掴んだ角をマウス位置まで伸縮する
+function resizeStamp(s, sx, sy, p) {
+  const fixed = toWorld(s, -sx * s.w / 2, -sy * s.h / 2);
+  const a = (s.rot || 0) * Math.PI / 180;
+  const dx = p.x - fixed.x, dy = p.y - fixed.y;
+  const w = Math.max(10, sx * ( dx * Math.cos(a) + dy * Math.sin(a)));
+  const h = Math.max(10, sy * (-dx * Math.sin(a) + dy * Math.cos(a)));
+  const lx = sx * w / 2, ly = sy * h / 2;
+  const cx = fixed.x + lx * Math.cos(a) - ly * Math.sin(a);
+  const cy = fixed.y + lx * Math.sin(a) + ly * Math.cos(a);
+  s.w = w; s.h = h; s.x = cx - w / 2; s.y = cy - h / 2;
+}
+
+
+// 選択中に出すハンドル: 設備は 上の○=回転 と 四隅の□=大きさ、車いす円は □=半径
+function handlesOf(s) {
+  if (s.type === 'stamp') {
+    const hw = s.w / 2, hh = s.h / 2;
+    return [
+      { mode: 'rotate', ...toWorld(s, 0, -hh - screenToCanvas(COARSE ? 36 : 28)) },
+      ...[[-1,-1],[1,-1],[1,1],[-1,1]].map(([sx, sy]) => ({ mode: 'resize', sx, sy, ...toWorld(s, sx * hw, sy * hh) })),
+    ];
+  }
+  if (s.type === 'wheelchair_circle') return [{ mode: 'radius', x: s.x + s.r, y: s.y }];
+  return [];
+}
+
+function pickHandle(px, py) {
+  if (!selected) return null;
+  const tol = handleR() + screenToCanvas(6);
+  return handlesOf(selected).find(h => Math.hypot(px - h.x, py - h.y) <= tol) || null;
+}
+
+function drawSelection(c) {
+  const s = selected;
+  const hs = s ? handlesOf(s) : [];
+  if (!hs.length) return;
+  c.save();
+  c.strokeStyle = '#1E88E5';
+  c.lineWidth = 1.5;
+  if (s.type === 'stamp') {
+    const top = toWorld(s, 0, -s.h / 2);
+    c.setLineDash([5, 4]);
+    c.beginPath();
+    hs.slice(1).forEach((h, i) => i ? c.lineTo(h.x, h.y) : c.moveTo(h.x, h.y));
+    c.closePath();
+    c.moveTo(top.x, top.y); c.lineTo(hs[0].x, hs[0].y);
+    c.stroke();
+    c.setLineDash([]);
+  }
+  c.fillStyle = '#FFFFFF';
+  const r = handleR();
+  hs.forEach(h => {
+    c.beginPath();
+    if (h.mode === 'rotate') c.arc(h.x, h.y, r, 0, Math.PI * 2);
+    else c.rect(h.x - r + 1, h.y - r + 1, r * 2 - 2, r * 2 - 2);
+    c.fill(); c.stroke();
+  });
+  // 縮尺合わせ済みなら実寸を添える
+  if (calibrated) {
+    const k = pxPerM / 100;
+    const isStamp = s.type === 'stamp';
+    const text = isStamp ? `${Math.round(s.w / k)}×${Math.round(s.h / k)}cm` : `直径${Math.round(s.r * 2 / k)}cm`;
+    const cx = isStamp ? s.x + s.w / 2 : s.x;
+    const y  = isStamp ? s.y + s.h / 2 + stampHalfHeight(s) + 30 : s.y + s.r + 18;
+    c.font = 'bold 12px Hiragino Sans, sans-serif';
+    const tw = c.measureText(text).width;
+    c.fillStyle = 'rgba(255,255,255,0.92)';
+    c.fillRect(cx - tw / 2 - 4, y - 12, tw + 8, 16);
+    c.fillStyle = '#1565C0';
+    c.textAlign = 'center';
+    c.fillText(text, cx, y);
+  }
+  c.restore();
+}
+
+// ================================================================
+//  下絵（スキャンした間取り図）
+// ================================================================
+function loadUnderlayFile(file) {
+  if (!file) return;
+  // 図と一緒に保存できるよう、画像は data URL で持つ
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      // キャンバスに収まる最大サイズで中央に置く
+      const k = Math.min((CANVAS_W - 80) / img.width, (CANVAS_H - 80) / img.height);
+      const w = img.width * k, h = img.height * k;
+      underlay = { img, src: reader.result, x: (CANVAS_W - w) / 2, y: (CANVAS_H - h) / 2, w, h };
+      setCalibration(null);
+      showUnderlayTools();
+      redraw();
+    };
+    img.onerror = () => alert('この画像は読み込めませんでした。PNG か JPEG で書き出してください。');
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showUnderlayTools() {
+  // 下絵の壁はグリッドに乗らないので吸着を外す
+  snapOn = false;
+  document.getElementById('snapCb').checked = false;
+  document.getElementById('underlayTools').style.display = 'contents';
+}
+
+function removeUnderlay() {
+  underlay = null;
+  setCalibration(null);
+  document.getElementById('underlayTools').style.display = 'none';
+  redraw();
+}
+
+function drawUnderlay(c) {
+  if (!underlay) return;
+  c.save();
+  c.globalAlpha = underlayAlpha;
+  c.drawImage(underlay.img, underlay.x, underlay.y, underlay.w, underlay.h);
+  c.restore();
+}
+
+// 縮尺を設定する（null で初期値に戻す）
+function setCalibration(ppm) {
+  calibrated = ppm !== null;
+  pxPerM = calibrated ? ppm : 40;
+  updateGrid();
+  updateUnderlayStatus();
+}
+
+function updateGrid() {
+  gridSize = parseInt(document.getElementById('scaleSel').value) / 40 * pxPerM;
+}
+
+function updateUnderlayStatus() {
+  document.getElementById('underlayStatus').textContent =
+    !underlay ? '' :
+    currentTool === 'calibrate' ? ' ｜ 縮尺合わせ: 長さの分かる壁に沿ってドラッグ' :
+    calibrated ? ' ｜ 下絵: 縮尺合わせ済み' : ' ｜ 下絵: 縮尺未設定';
+}
+
+function startCalibrate() {
+  document.querySelectorAll('.pal-btn').forEach(b => b.classList.remove('active'));
+  currentTool = 'calibrate';
+  selected = null;
+  canvas.style.cursor = '';
+  redraw();
+  updateUnderlayStatus();
+}
+
+function finishCalibrate(distPx) {
+  const input = prompt('なぞった線の実際の長さを入力（例: 360cm、3.6m）:');
+  const cm = parseLengthCm(input);
+  const ppm = distPx / (cm / 100);
+  if (cm && ppm >= 10 && ppm <= 1000) {
+    setCalibration(ppm);
+  } else if (input !== null) {
+    alert('長さを確認してください。「360cm」「3.6m」のように入力します。');
+  }
+  setTool(document.querySelector('.pal-btn[data-tool="wall"]'));
+  redraw();
+}
+
+function parseLengthCm(str) {
+  const m = String(str || '').normalize('NFKC').trim().match(/^(\d+(?:\.\d+)?)\s*(mm|cm|m)?$/i);
+  if (!m) return null;
+  const unit = (m[2] || 'cm').toLowerCase();
+  return parseFloat(m[1]) * (unit === 'm' ? 100 : unit === 'mm' ? 0.1 : 1);
+}
+
+function formatLength(distPx) {
+  return Math.round(distPx / pxPerM * 100) + 'cm';
+}
+
+// ================================================================
+//  消去
+// ================================================================
+function eraseNear(x1, y1, x2, y2) {
+  const mx = (x1+x2)/2, my = (y1+y2)/2;
+  const THRESH = 22;
+  shapes = shapes.filter(s => distToShape(s, mx, my) > THRESH);
+}
+
+function distToShape(s, px, py) {
+  switch(s.type) {
+    case 'wall': case 'handrail': case 'step':
+    case 'sliding_door': case 'dimension':
+      return distToSegment(s.x1, s.y1, s.x2, s.y2, px, py);
+    case 'room':
+      return Math.min(
+        distToSegment(s.x, s.y, s.x+s.w, s.y, px, py),
+        distToSegment(s.x, s.y+s.h, s.x+s.w, s.y+s.h, px, py),
+        distToSegment(s.x, s.y, s.x, s.y+s.h, px, py),
+        distToSegment(s.x+s.w, s.y, s.x+s.w, s.y+s.h, px, py)
+      );
+    case 'stamp':
+      return Math.hypot(px - (s.x+s.w/2), py - (s.y+s.h/2));
+    case 'wheelchair_circle':
+      return Math.abs(Math.hypot(px-s.x, py-s.y) - s.r);
+    case 'swing_door':
+      return Math.hypot(px-s.x, py-s.y);
+    default:
+      return Math.hypot(px-(s.x||0), py-(s.y||0));
+  }
+}
+
+function distToSegment(x1, y1, x2, y2, px, py) {
+  const dx = x2-x1, dy = y2-y1, len2 = dx*dx+dy*dy;
+  if (len2 === 0) return Math.hypot(px-x1, py-y1);
+  const t = Math.max(0, Math.min(1, ((px-x1)*dx+(py-y1)*dy)/len2));
+  return Math.hypot(px-x1-t*dx, py-y1-t*dy);
+}
+
+// ================================================================
+//  アンドゥ
+// ================================================================
+function saveUndo() {
+  undoStack.push(JSON.stringify(shapes));
+  if (undoStack.length > 50) undoStack.shift();
+}
+function undoLast() {
+  if (!undoStack.length) return;
+  shapes = JSON.parse(undoStack.pop());
+  redraw();
+}
+function clearAll() {
+  if (!confirm('全ての図形を消去しますか？')) return;
+  saveUndo(); shapes = []; redraw();
+}
+
+// ================================================================
+//  描画メイン
+// ================================================================
+function redraw() {
+  if (selected && !shapes.includes(selected)) selected = null;   // 消去・元に戻すで無くなった場合
+  ctx.fillStyle = sketchMode ? '#FDF6E3' : '#FAFAF0';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  drawUnderlay(ctx);
+  if (sketchMode) drawSketchPaper(ctx, CANVAS_W, CANVAS_H);
+  else drawGrid(ctx, CANVAS_W, CANVAS_H);
+  shapes.forEach(s => renderShape(ctx, s));
+  drawSelection(ctx);
+  if (drawing) renderPreview();
+  scheduleAutosave();
+}
+
+function drawSketchPaper(c, W, H) {
+  c.save();
+  c.strokeStyle = '#D4C9A8';
+  c.lineWidth = 0.6;
+  for (let x = 0; x <= W; x += gridSize) {
+    c.beginPath(); c.moveTo(x, 0); c.lineTo(x, H); c.stroke();
+  }
+  for (let y = 0; y <= H; y += gridSize) {
+    c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+  }
+  c.restore();
+}
+
+function drawGrid(c, W, H) {
+  c.save();
+  c.strokeStyle = '#E8E8D8';
+  c.lineWidth = 0.5;
+  for (let x = 0; x <= W; x += gridSize) {
+    c.beginPath(); c.moveTo(x, 0); c.lineTo(x, H); c.stroke();
+  }
+  for (let y = 0; y <= H; y += gridSize) {
+    c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+  }
+  // 4マスごとに強調
+  c.strokeStyle = '#D8D8C8';
+  c.lineWidth = 1;
+  for (let x = 0; x <= W; x += gridSize*4) {
+    c.beginPath(); c.moveTo(x, 0); c.lineTo(x, H); c.stroke();
+  }
+  for (let y = 0; y <= H; y += gridSize*4) {
+    c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+  }
+  c.restore();
+}
+
+function renderPreview() {
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  const s = buildPreview();
+  if (s) renderShape(ctx, s);
+  ctx.restore();
+}
+
+function buildPreview() {
+  const x = Math.min(startX, curX), y = Math.min(startY, curY);
+  switch(currentTool) {
+    case 'wall':         return { type:'wall',        x1:startX, y1:startY, x2:curX, y2:curY };
+    case 'handrail':     return { type:'handrail',    x1:startX, y1:startY, x2:curX, y2:curY };
+    case 'step':         return { type:'step',        x1:startX, y1:startY, x2:curX, y2:curY, label:'' };
+    case 'room':         return { type:'room',        x, y, w:Math.abs(curX-startX), h:Math.abs(curY-startY), label:'' };
+    case 'swing_door': {
+      const angle = Math.atan2(curY-startY, curX-startX);
+      const len = Math.min(Math.hypot(curX-startX, curY-startY), gridSize*3);
+      return { type:'swing_door', x:startX, y:startY, len, angle };
+    }
+    case 'sliding_door': return { type:'sliding_door', x1:startX, y1:startY, x2:curX, y2:curY };
+    case 'dimension':    return { type:'dimension',   x1:startX, y1:startY, x2:curX, y2:curY, text:'' };
+    case 'calibrate':    return { type:'dimension',   x1:startX, y1:startY, x2:curX, y2:curY, text:'' };
+    default: return null;
+  }
+}
+
+// ================================================================
+//  個別シェイプ描画
+// ================================================================
+function renderShape(c, s) {
+  c.save();
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+
+  switch(s.type) {
+
+    /* ── 壁 ── */
+    case 'wall':
+      c.strokeStyle = sketchMode ? '#2a2a2a' : '#1A1A1A';
+      c.lineWidth = sketchMode ? 4 : 6;
+      if (sketchMode) { sketchLine(c, s.x1, s.y1, s.x2, s.y2); }
+      else { c.beginPath(); c.moveTo(s.x1, s.y1); c.lineTo(s.x2, s.y2); c.stroke(); }
+      break;
+
+    /* ── 手すり ── */
+    case 'handrail':
+      c.strokeStyle = '#5577AA';
+      c.lineWidth = 3;
+      if (sketchMode) {
+        sketchLine(c, s.x1, s.y1, s.x2, s.y2);
+      } else {
+        c.setLineDash([10, 5]);
+        c.beginPath();
+        c.moveTo(s.x1, s.y1); c.lineTo(s.x2, s.y2);
+        c.stroke();
+        c.setLineDash([]);
+      }
+      c.fillStyle = '#4466AA';
+      c.font = 'bold 10px Hiragino Sans, sans-serif';
+      c.fillText('手すり', (s.x1+s.x2)/2+5, (s.y1+s.y2)/2 - 7);
+      break;
+
+    /* ── 段差 ── */
+    case 'step': {
+      const dx=s.x2-s.x1, dy=s.y2-s.y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 2) break;
+      const nx=-dy/len*7, ny=dx/len*7;
+      c.strokeStyle = '#C0392B';
+      c.lineWidth = 2.5;
+      c.beginPath();
+      c.moveTo(s.x1+nx, s.y1+ny); c.lineTo(s.x2+nx, s.y2+ny);
+      c.moveTo(s.x1-nx, s.y1-ny); c.lineTo(s.x2-nx, s.y2-ny);
+      c.stroke();
+      c.lineWidth = 2;
+      const n = Math.max(2, Math.floor(len / 14));
+      for (let i = 0; i <= n; i++) {
+        const t = i/n;
+        const px = s.x1+dx*t, py = s.y1+dy*t;
+        c.beginPath();
+        c.moveTo(px+nx, py+ny); c.lineTo(px-nx, py-ny);
+        c.stroke();
+      }
+      if (s.label) {
+        const mx=(s.x1+s.x2)/2, my=(s.y1+s.y2)/2;
+        c.fillStyle = '#C0392B';
+        c.font = 'bold 11px Hiragino Sans, sans-serif';
+        c.fillText('▲' + s.label, mx+10, my-10);
+      }
+      break;
+    }
+
+    /* ── 部屋 ── */
+    case 'room':
+      c.strokeStyle = sketchMode ? '#333' : '#2C2C2C';
+      c.lineWidth = sketchMode ? 2 : 2.5;
+      c.fillStyle = sketchMode ? 'rgba(245,240,220,0.35)' : 'rgba(238,238,220,0.28)';
+      c.fillRect(s.x, s.y, s.w, s.h);
+      if (sketchMode) { sketchRect(c, s.x, s.y, s.w, s.h); }
+      else { c.strokeRect(s.x, s.y, s.w, s.h); }
+      if (s.label) {
+        c.font = '13px Hiragino Sans, sans-serif';
+        const tw = c.measureText(s.label).width;
+        c.fillStyle = 'rgba(250,250,240,0.88)';
+        c.fillRect(s.x+6, s.y+5, tw+10, 20);
+        c.fillStyle = '#222';
+        c.fillText(s.label, s.x+11, s.y+20);
+      }
+      break;
+
+    /* ── 開き戸 ── */
+    case 'swing_door': {
+      c.strokeStyle = '#2C2C2C';
+      c.lineWidth = 2.5;
+      const ex = s.x + Math.cos(s.angle) * s.len;
+      const ey = s.y + Math.sin(s.angle) * s.len;
+      // 扉パネル
+      c.beginPath();
+      c.moveTo(s.x, s.y); c.lineTo(ex, ey);
+      c.stroke();
+      // スイングアーク
+      c.setLineDash([5, 3]);
+      c.lineWidth = 1.5;
+      const a0 = s.angle - Math.PI/2;
+      const a1 = s.angle;
+      c.beginPath();
+      c.arc(s.x, s.y, s.len, Math.min(a0,a1), Math.max(a0,a1));
+      c.stroke();
+      c.setLineDash([]);
+      // 蝶番点
+      c.fillStyle = '#2C2C2C';
+      c.beginPath();
+      c.arc(s.x, s.y, 4, 0, Math.PI*2);
+      c.fill();
+      break;
+    }
+
+    /* ── 引き戸 ── */
+    case 'sliding_door': {
+      const dx=s.x2-s.x1, dy=s.y2-s.y1;
+      const len=Math.hypot(dx,dy);
+      if(len<2) break;
+      const nx=-dy/len*5, ny=dx/len*5;
+      c.strokeStyle = '#2C2C2C';
+      c.lineWidth = 2.5;
+      if (sketchMode) {
+        sketchLine(c, s.x1+nx, s.y1+ny, s.x2+nx, s.y2+ny);
+        sketchLine(c, s.x1-nx, s.y1-ny, s.x2-nx, s.y2-ny);
+      } else {
+        c.beginPath();
+        c.moveTo(s.x1+nx, s.y1+ny); c.lineTo(s.x2+nx, s.y2+ny);
+        c.moveTo(s.x1-nx, s.y1-ny); c.lineTo(s.x2-nx, s.y2-ny);
+        c.stroke();
+      }
+      // 中央破線
+      c.setLineDash([5,3]);
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(s.x1,s.y1); c.lineTo(s.x2,s.y2);
+      c.stroke();
+      c.setLineDash([]);
+      // 矢印
+      drawArrow(c, s.x1, s.y1, s.x2, s.y2, '#2C2C2C', 7);
+      break;
+    }
+
+    /* ── スタンプ ── */
+    case 'stamp': {
+      // 本体は中心まわりに回し、名前のラベルは回さず下に置く
+      const cx = s.x + s.w / 2, cy = s.y + s.h / 2;
+      c.save();
+      c.translate(cx, cy); c.rotate((s.rot || 0) * Math.PI / 180); c.translate(-cx, -cy);
+      renderStamp(c, s);
+      c.restore();
+      stampLabel(c, STAMP_LABEL[s.subtype], cx, cy + stampHalfHeight(s) + 14);
+      break;
+    }
+
+    /* ── 車いす回転スペース ── */
+    case 'wheelchair_circle': {
+      c.strokeStyle = '#2980B9';
+      c.lineWidth = 1.5;
+      c.setLineDash([7, 4]);
+      c.beginPath();
+      c.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      c.stroke();
+      c.setLineDash([]);
+      c.fillStyle = 'rgba(41,128,185,0.08)';
+      c.fill();
+      c.fillStyle = '#2980B9';
+      c.font = 'bold 11px Hiragino Sans, sans-serif';
+      c.textAlign = 'center';
+      c.fillText('車いす', s.x, s.y+4);
+      c.textAlign = 'left';
+      break;
+    }
+
+    /* ── テキスト ── */
+    case 'text':
+      c.fillStyle = '#1A1A2E';
+      c.font = `${s.size||14}px Hiragino Sans, sans-serif`;
+      c.fillText(s.text, s.x, s.y);
+      break;
+
+    /* ── 寸法線 ── */
+    case 'dimension': {
+      const dx=s.x2-s.x1, dy=s.y2-s.y1;
+      const len=Math.hypot(dx,dy);
+      if(len<2) break;
+      const nx=-dy/len*14, ny=dx/len*14;
+      c.strokeStyle = '#1E6E9E';
+      c.lineWidth = 1.5;
+      // 寸法線本体
+      c.beginPath();
+      c.moveTo(s.x1+nx, s.y1+ny); c.lineTo(s.x2+nx, s.y2+ny);
+      c.stroke();
+      // 引出線（端部）
+      c.beginPath();
+      c.moveTo(s.x1,    s.y1);    c.lineTo(s.x1+nx*1.6, s.y1+ny*1.6);
+      c.moveTo(s.x2,    s.y2);    c.lineTo(s.x2+nx*1.6, s.y2+ny*1.6);
+      c.stroke();
+      // 端部矢印
+      drawArrow(c, s.x2+nx, s.y2+ny, s.x1+nx, s.y1+ny, '#1E6E9E', 7);
+      drawArrow(c, s.x1+nx, s.y1+ny, s.x2+nx, s.y2+ny, '#1E6E9E', 7);
+      // 寸法値ラベル
+      if (s.text) {
+        const mx=(s.x1+s.x2)/2+nx*1.3, my=(s.y1+s.y2)/2+ny*1.3;
+        c.font = 'bold 12px Hiragino Sans, sans-serif';
+        const tw = c.measureText(s.text).width;
+        c.fillStyle = 'rgba(250,250,240,0.92)';
+        c.fillRect(mx-tw/2-4, my-13, tw+8, 16);
+        c.fillStyle = '#1A4070';
+        c.textAlign = 'center';
+        c.fillText(s.text, mx, my);
+        c.textAlign = 'left';
+      }
+      break;
+    }
+
+    /* ── 注意マーカー ── */
+    case 'hazard': {
+      c.strokeStyle = '#E74C3C';
+      c.lineWidth = 2;
+      c.fillStyle = 'rgba(231,76,60,0.12)';
+      c.beginPath();
+      c.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      c.fill(); c.stroke();
+      c.font = 'bold 16px sans-serif';
+      c.textAlign = 'center';
+      c.fillStyle = '#E74C3C';
+      c.fillText('⚠', s.x, s.y - s.r - 4);
+      if (s.text) {
+        c.font = 'bold 10px Hiragino Sans, sans-serif';
+        c.fillStyle = '#B03A2E';
+        c.fillText(s.text, s.x, s.y+4);
+      }
+      c.textAlign = 'left';
+      break;
+    }
+  }
+  c.restore();
+}
+
+// ================================================================
+//  スタンプ描画
+// ================================================================
+function renderStamp(c, s) {
+  c.save();
+  c.strokeStyle = '#333';
+  c.lineWidth = 1.5;
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+
+  switch(s.subtype) {
+
+    /* ─ 便座 ─ */
+    case 'toilet': {
+      const th = s.h * 0.28;
+      // タンク
+      c.fillStyle = '#EEEEE0';
+      c.fillRect(s.x, s.y, s.w, th);
+      c.strokeRect(s.x, s.y, s.w, th);
+      // 便器本体
+      c.fillStyle = '#F8F8F0';
+      pathRoundRect(c, s.x+2, s.y+th, s.w-4, s.h-th-2, [3,3,(s.w-4)*0.45,(s.w-4)*0.45]);
+      c.fill(); c.stroke();
+      // 便座リング
+      c.fillStyle = 'rgba(200,200,190,0.5)';
+      c.beginPath();
+      c.ellipse(s.x+s.w/2, s.y+s.h*0.72, s.w*0.36, s.h*0.22, 0, 0, Math.PI*2);
+      c.fill(); c.stroke();
+      break;
+    }
+
+    /* ─ 浴槽 ─ */
+    case 'bath': {
+      c.fillStyle = '#EEF0E8';
+      c.fillRect(s.x, s.y, s.w, s.h);
+      c.strokeRect(s.x, s.y, s.w, s.h);
+      // 内側
+      const m = 6;
+      c.fillStyle = '#D8EAF8';
+      pathRoundRect(c, s.x+m, s.y+m, s.w-m*2, s.h-m*2, 8);
+      c.fill();
+      c.strokeStyle = '#5588BB';
+      c.lineWidth = 1;
+      pathRoundRect(c, s.x+m, s.y+m, s.w-m*2, s.h-m*2, 8);
+      c.stroke();
+      // 水面
+      c.strokeStyle = 'rgba(80,140,200,0.45)';
+      c.setLineDash([4,3]);
+      c.beginPath();
+      c.moveTo(s.x+m+4, s.y+s.h*0.6); c.lineTo(s.x+s.w-m-4, s.y+s.h*0.6);
+      c.stroke();
+      c.setLineDash([]);
+      break;
+    }
+
+    /* ─ ベッド ─ */
+    case 'bed': {
+      c.fillStyle = '#EEF0E8';
+      c.fillRect(s.x, s.y, s.w, s.h);
+      c.strokeStyle = '#333'; c.lineWidth = 1.5;
+      c.strokeRect(s.x, s.y, s.w, s.h);
+      // 頭板
+      c.fillStyle = '#D5CDB5';
+      c.fillRect(s.x, s.y, s.w, s.h*0.1);
+      c.strokeRect(s.x, s.y, s.w, s.h*0.1);
+      // 枕
+      c.fillStyle = '#F0EEE0';
+      pathRoundRect(c, s.x+s.w*0.1, s.y+s.h*0.12, s.w*0.8, s.h*0.13, 4);
+      c.fill();
+      c.strokeStyle = '#AAA'; c.lineWidth = 1;
+      pathRoundRect(c, s.x+s.w*0.1, s.y+s.h*0.12, s.w*0.8, s.h*0.13, 4);
+      c.stroke();
+      break;
+    }
+
+    /* ─ 洗面台 ─ */
+    case 'sink': {
+      c.fillStyle = '#EEF0E8';
+      c.fillRect(s.x, s.y, s.w, s.h);
+      c.strokeStyle = '#333'; c.lineWidth = 1.5;
+      c.strokeRect(s.x, s.y, s.w, s.h);
+      // 洗面ボウル
+      c.fillStyle = '#D8EAF5';
+      c.beginPath();
+      c.ellipse(s.x+s.w/2, s.y+s.h/2, s.w*0.38, s.h*0.38, 0, 0, Math.PI*2);
+      c.fill(); c.stroke();
+      // 排水口
+      c.fillStyle = '#666';
+      c.beginPath();
+      c.arc(s.x+s.w/2, s.y+s.h/2, 2.5, 0, Math.PI*2);
+      c.fill();
+      break;
+    }
+
+    /* ─ キッチン（シンクとコンロ）─ */
+    case 'kitchen': {
+      fillBox(c, s.x, s.y, s.w, s.h, '#EEF0E8');
+      c.fillStyle = '#D8EAF5';
+      pathRoundRect(c, s.x+s.w*0.1, s.y+s.h*0.2, s.w*0.28, s.h*0.6, 4);
+      c.fill(); c.stroke();
+      c.fillStyle = '#FFFFFF';
+      [0.66, 0.84].forEach(t => {
+        c.beginPath();
+        c.arc(s.x+s.w*t, s.y+s.h/2, Math.min(s.w*0.06, s.h*0.25), 0, Math.PI*2);
+        c.fill(); c.stroke();
+      });
+      break;
+    }
+
+    /* ─ 洗濯機（奥に操作パネル）─ */
+    case 'washer': {
+      fillBox(c, s.x, s.y, s.w, s.h, '#F8F8F0');
+      fillBox(c, s.x, s.y, s.w, s.h*0.18, '#D5D5CC');
+      c.fillStyle = '#D8EAF5';
+      c.beginPath();
+      c.arc(s.x+s.w/2, s.y+s.h*0.59, Math.min(s.w, s.h*0.82)*0.36, 0, Math.PI*2);
+      c.fill(); c.stroke();
+      break;
+    }
+
+    /* ─ 冷蔵庫（手前が扉）─ */
+    case 'fridge': {
+      fillBox(c, s.x, s.y, s.w, s.h, '#F4F4F8');
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(s.x, s.y); c.lineTo(s.x+s.w, s.y+s.h*0.85);
+      c.moveTo(s.x+s.w, s.y); c.lineTo(s.x, s.y+s.h*0.85);
+      c.moveTo(s.x, s.y+s.h*0.85); c.lineTo(s.x+s.w, s.y+s.h*0.85);
+      c.stroke();
+      c.lineWidth = 3;
+      c.beginPath();
+      c.moveTo(s.x+s.w*0.35, s.y+s.h*0.93); c.lineTo(s.x+s.w*0.65, s.y+s.h*0.93);
+      c.stroke();
+      break;
+    }
+
+    /* ─ 階段（○から矢印の向きにのぼる）─ */
+    case 'stairs': {
+      fillBox(c, s.x, s.y, s.w, s.h, '#F8F8F0');
+      c.lineWidth = 1;
+      c.beginPath();
+      for (let i = 1; i < 12; i++) {
+        const y = s.y + s.h*i/12;
+        c.moveTo(s.x, y); c.lineTo(s.x+s.w, y);
+      }
+      c.stroke();
+      const mx = s.x + s.w/2;
+      c.strokeStyle = '#C0392B';
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.moveTo(mx, s.y+s.h-8); c.lineTo(mx, s.y+8);
+      c.stroke();
+      c.beginPath();
+      c.arc(mx, s.y+s.h-8, 3, 0, Math.PI*2);
+      c.stroke();
+      drawArrow(c, mx, s.y+s.h/2, mx, s.y+4, '#C0392B', 9);
+      break;
+    }
+
+    /* ─ 下駄箱 ─ */
+    case 'getabako': {
+      fillBox(c, s.x, s.y, s.w, s.h, '#E8DFC8');
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(s.x+s.w/2, s.y); c.lineTo(s.x+s.w/2, s.y+s.h);
+      c.stroke();
+      break;
+    }
+
+    /* ─ 布団（上が枕、点線は掛け布団の折り返し）─ */
+    case 'futon': {
+      c.fillStyle = '#F3EEF8';
+      pathRoundRect(c, s.x, s.y, s.w, s.h, Math.min(s.w, s.h)*0.12);
+      c.fill(); c.stroke();
+      c.fillStyle = '#FFFFFF';
+      pathRoundRect(c, s.x+s.w*0.2, s.y+s.h*0.04, s.w*0.6, s.h*0.1, 4);
+      c.fill(); c.stroke();
+      c.setLineDash([4, 3]);
+      c.beginPath();
+      c.moveTo(s.x+4, s.y+s.h*0.3); c.lineTo(s.x+s.w-4, s.y+s.h*0.3);
+      c.stroke();
+      c.setLineDash([]);
+      break;
+    }
+
+    /* ─ 椅子（上が背もたれ）─ */
+    case 'chair': {
+      c.fillStyle = '#D5CDB5';
+      pathRoundRect(c, s.x, s.y, s.w, s.h*0.2, 3);
+      c.fill(); c.stroke();
+      c.fillStyle = '#EEF0E8';
+      pathRoundRect(c, s.x+s.w*0.05, s.y+s.h*0.24, s.w*0.9, s.h*0.76, 4);
+      c.fill(); c.stroke();
+      break;
+    }
+
+    /* ─ テーブル ─ */
+    case 'table': {
+      fillBox(c, s.x, s.y, s.w, s.h, '#E8DFC8');
+      c.lineWidth = 1;
+      c.strokeRect(s.x+4, s.y+4, Math.max(0, s.w-8), Math.max(0, s.h-8));
+      break;
+    }
+
+    /* ─ ソファ（上が背もたれ、両側がひじ掛け）─ */
+    case 'sofa': {
+      const arm = s.w*0.12, back = s.h*0.28;
+      c.fillStyle = '#C9D3E0';
+      pathRoundRect(c, s.x, s.y, s.w, s.h, 6);
+      c.fill(); c.stroke();
+      fillBox(c, s.x+arm, s.y+back, s.w-arm*2, s.h-back, '#E3E9F1');
+      c.beginPath();
+      c.moveTo(s.x+s.w/2, s.y+back); c.lineTo(s.x+s.w/2, s.y+s.h);
+      c.stroke();
+      break;
+    }
+
+    /* ─ こたつ（点線がこたつ布団）─ */
+    case 'kotatsu': {
+      const m = Math.min(s.w, s.h)*0.12;
+      c.fillStyle = 'rgba(214,120,90,0.15)';
+      c.setLineDash([5, 3]);
+      pathRoundRect(c, s.x, s.y, s.w, s.h, m);
+      c.fill(); c.stroke();
+      c.setLineDash([]);
+      fillBox(c, s.x+m, s.y+m, s.w-m*2, s.h-m*2, '#E8DFC8');
+      break;
+    }
+
+    /* ─ タンス・収納（背の高い家具は斜線）─ */
+    case 'storage': {
+      fillBox(c, s.x, s.y, s.w, s.h, '#E8DFC8');
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(s.x, s.y+s.h); c.lineTo(s.x+s.w, s.y);
+      c.stroke();
+      break;
+    }
+
+    /* ─ 仏壇（手前が観音開きの扉）─ */
+    case 'butsudan': {
+      fillBox(c, s.x, s.y, s.w, s.h, '#6B5444');
+      c.strokeStyle = '#D4B26A';
+      c.beginPath();
+      c.moveTo(s.x+3, s.y+s.h*0.35); c.lineTo(s.x+s.w-3, s.y+s.h*0.35);
+      c.moveTo(s.x+s.w/2, s.y+s.h*0.35); c.lineTo(s.x+s.w/2, s.y+s.h-2);
+      c.stroke();
+      break;
+    }
+
+    /* ─ ポータブルトイレ（上が背もたれ、両側がひじ掛け）─ */
+    case 'ptoilet': {
+      const arm = s.w*0.14, back = s.h*0.16;
+      fillBox(c, s.x, s.y, s.w, s.h, '#F8F8F0');
+      fillBox(c, s.x, s.y, s.w, back, '#D5CDB5');
+      fillBox(c, s.x, s.y+back, arm, s.h-back, '#D5CDB5');
+      fillBox(c, s.x+s.w-arm, s.y+back, arm, s.h-back, '#D5CDB5');
+      c.fillStyle = 'rgba(200,200,190,0.6)';
+      c.beginPath();
+      c.ellipse(s.x+s.w/2, s.y+s.h*0.6, (s.w-arm*2)*0.38, s.h*0.26, 0, 0, Math.PI*2);
+      c.fill(); c.stroke();
+      break;
+    }
+
+    /* ─ シャワーチェア（上が背もたれ、座面に水抜き穴）─ */
+    case 'showerchair': {
+      c.fillStyle = '#D8EAF8';
+      pathRoundRect(c, s.x, s.y, s.w, s.h*0.2, 3);
+      c.fill(); c.stroke();
+      c.fillStyle = '#EEF5FB';
+      pathRoundRect(c, s.x+s.w*0.04, s.y+s.h*0.24, s.w*0.92, s.h*0.76, 6);
+      c.fill(); c.stroke();
+      c.fillStyle = '#7FA7C9';
+      [0.35, 0.5, 0.65].forEach(t => {
+        c.beginPath();
+        c.arc(s.x+s.w*t, s.y+s.h*0.62, 1.8, 0, Math.PI*2);
+        c.fill();
+      });
+      break;
+    }
+  }
+
+  c.restore();
+}
+
+const STAMP_LABEL = {
+  toilet: '便座', bath: '浴槽', sink: '洗面', kitchen: 'キッチン', washer: '洗濯機',
+  fridge: '冷蔵庫', stairs: '階段', getabako: '下駄箱',
+  bed: 'ベッド', futon: '布団', chair: '椅子', table: 'テーブル', sofa: 'ソファ',
+  kotatsu: 'こたつ', storage: 'タンス', butsudan: '仏壇',
+  ptoilet: 'ポータブルトイレ', showerchair: 'シャワーチェア',
+};
+
+function stampLabel(c, text, cx, y) {
+  c.fillStyle = '#444';
+  c.font = '10px Hiragino Sans, sans-serif';
+  c.textAlign = 'center';
+  c.fillText(text, cx, y);
+  c.textAlign = 'left';
+}
+
+// ================================================================
+//  ユーティリティ
+// ================================================================
+function fillBox(c, x, y, w, h, color) {
+  c.fillStyle = color;
+  c.fillRect(x, y, w, h);
+  c.strokeRect(x, y, w, h);
+}
+
+function pathRoundRect(c, x, y, w, h, r) {
+  const [tl,tr,br,bl] = Array.isArray(r) ? r : [r,r,r,r];
+  c.beginPath();
+  c.moveTo(x+tl, y);
+  c.lineTo(x+w-tr, y);   c.arcTo(x+w, y, x+w, y+tr, tr);
+  c.lineTo(x+w, y+h-br); c.arcTo(x+w, y+h, x+w-br, y+h, br);
+  c.lineTo(x+bl, y+h);   c.arcTo(x, y+h, x, y+h-bl, bl);
+  c.lineTo(x, y+tl);     c.arcTo(x, y, x+tl, y, tl);
+  c.closePath();
+}
+
+function drawArrow(c, fx, fy, tx, ty, color, size) {
+  const a = Math.atan2(ty-fy, tx-fx);
+  c.fillStyle = color;
+  c.beginPath();
+  c.moveTo(tx, ty);
+  c.lineTo(tx - size*Math.cos(a-0.38), ty - size*Math.sin(a-0.38));
+  c.lineTo(tx - size*Math.cos(a+0.38), ty - size*Math.sin(a+0.38));
+  c.closePath();
+  c.fill();
+}
+
+// ================================================================
+//  スケッチ風モード
+// ================================================================
+function toggleSketch() {
+  sketchMode = !sketchMode;
+  const btn = document.getElementById('sketchBtn');
+  if (sketchMode) {
+    btn.style.background = '#3d4f2e';
+    btn.style.borderColor = '#7ec85a';
+    btn.style.color = '#b8f59a';
+  } else {
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  }
+  redraw();
+}
+
+// 手書き風の線を描く（roughjs相当をライブラリなしで実装）
+function sketchLine(c, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.hypot(dx, dy);
+  if (len < 2) return;
+
+  // 主線（わずかにブレさせる）
+  const jitter = () => (Math.random() - 0.5) * 2.5;
+  c.beginPath();
+  c.moveTo(x1 + jitter(), y1 + jitter());
+  // 中間点で少しカーブさせる
+  const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * 4;
+  const my = (y1 + y2) / 2 + (Math.random() - 0.5) * 4;
+  c.quadraticCurveTo(mx, my, x2 + jitter(), y2 + jitter());
+  c.stroke();
+
+  // 薄い2本目の線（手書きの重ね書き感）
+  const prevAlpha = c.globalAlpha;
+  c.globalAlpha = prevAlpha * 0.3;
+  c.beginPath();
+  c.moveTo(x1 + jitter() * 1.5, y1 + jitter() * 1.5);
+  c.lineTo(x2 + jitter() * 1.5, y2 + jitter() * 1.5);
+  c.stroke();
+  c.globalAlpha = prevAlpha;
+}
+
+function sketchRect(c, x, y, w, h) {
+  sketchLine(c, x, y, x + w, y);
+  sketchLine(c, x + w, y, x + w, y + h);
+  sketchLine(c, x + w, y + h, x, y + h);
+  sketchLine(c, x, y + h, x, y);
+}
+
+// ================================================================
+//  保存・読み込み（あとで続きを編集できる .json 形式）
+// ================================================================
+const SAVE_FORMAT = 'kaoku-madori';
+
+function buildSaveData() {
+  return {
+    format: SAVE_FORMAT,
+    version: 1,
+    savedAt: new Date().toISOString(),
+    shapes,
+    scale: document.getElementById('scaleSel').value,
+    sketchMode,
+    calibration: calibrated ? pxPerM : null,
+    underlay: underlay && { src: underlay.src, x: underlay.x, y: underlay.y, w: underlay.w, h: underlay.h, alpha: underlayAlpha },
+  };
+}
+
+function saveDrawing() {
+  const blob = new Blob([JSON.stringify(buildSaveData())], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = `間取り図_${new Date().toISOString().slice(0,10)}.json`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+}
+
+function loadDrawingFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data = null;
+    try { data = JSON.parse(reader.result); } catch (err) { /* 下で案内する */ }
+    if (!data || data.format !== SAVE_FORMAT || !Array.isArray(data.shapes)) {
+      alert('このファイルは開けません。間取り図ツールの「保存」で作った .json ファイルを選んでください。');
+      return;
+    }
+    if ((shapes.length || underlay) && !confirm('いま描いている図は、開いた図に置き換わります。よろしいですか？')) return;
+    applySaveData(data);
+  };
+  reader.readAsText(file);
+}
+
+// 保存データを画面に戻す（「開く」と自動保存からの復元で共通）
+function applySaveData(data) {
+  shapes = data.shapes.filter(s => s && typeof s.type === 'string');
+  undoStack = [];
+  selected = null; moving = null; drawing = false; pendingTap = null;
+  const sel = document.getElementById('scaleSel');
+  sel.value = data.scale || '40';
+  sel.dispatchEvent(new Event('change'));
+  if (!!data.sketchMode !== sketchMode) toggleSketch();
+  const u = data.underlay;
+  if (!u || typeof u.src !== 'string' || !u.src.startsWith('data:image/')) { removeUnderlay(); return; }
+  const img = new Image();
+  img.onload = () => {
+    underlay = { img, src: u.src, x: u.x, y: u.y, w: u.w, h: u.h };
+    underlayAlpha = u.alpha ?? 0.6;
+    document.getElementById('underlayAlpha').value = Math.round(underlayAlpha * 100);
+    showUnderlayTools();
+    setCalibration(data.calibration ?? null);
+    redraw();
+  };
+  img.onerror = () => { alert('下絵の画像を読み込めませんでした。図形だけ復元します。'); removeUnderlay(); };
+  img.src = u.src;
+}
+
+// ================================================================
+//  自動保存（この端末のブラウザ内。iPad でページが読み込み直されても続きから描ける）
+// ================================================================
+let autosaveReady = false;    // 起動時の復元確認が終わるまでは上書きしない
+let autosaveTimer = null;
+let lastAutosaveKey = '';
+
+function idbRequest(mode, action) {
+  return new Promise((resolve, reject) => {
+    const open = indexedDB.open('kaoku-madori', 1);
+    open.onupgradeneeded = () => open.result.createObjectStore('drafts');
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const db = open.result;
+      const tx = db.transaction('drafts', mode);
+      const req = action(tx.objectStore('drafts'));
+      tx.oncomplete = () => { db.close(); resolve(req.result); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    };
+  });
+}
+
+function scheduleAutosave() {
+  if (!autosaveReady) return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(autosaveNow, 1500);
+}
+
+function autosaveNow() {
+  clearTimeout(autosaveTimer);
+  if (!autosaveReady) return;
+  const data = buildSaveData();
+  // 中身が変わっていなければ書き込まない（下絵は長いので長さだけ比べる）
+  const key = JSON.stringify({ ...data, savedAt: 0, underlay: data.underlay && { ...data.underlay, src: data.underlay.src.length } });
+  if (key === lastAutosaveKey) return;
+  lastAutosaveKey = key;
+  try {
+    idbRequest('readwrite', st => st.put(data, 'current')).catch(() => {});
+  } catch (err) { /* 保存できない環境（プライベートブラウズなど）では何もしない */ }
+}
+
+async function restoreAutosave() {
+  let data = null;
+  try { data = await idbRequest('readonly', st => st.get('current')); } catch (err) { /* 読めなければ新規で始める */ }
+  if (data && data.format === SAVE_FORMAT && (data.shapes?.length || data.underlay)) {
+    const when = new Date(data.savedAt).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    if (confirm(`前回描いていた図（${when}）が残っています。続きから描きますか？\n「キャンセル」で新しく始めます。`)) {
+      applySaveData(data);
+    }
+  }
+  autosaveReady = true;
+}
+
+// ================================================================
+//  PNG エクスポート
+// ================================================================
+function exportPNG() {
+  const ec = document.createElement('canvas');
+  ec.width = CANVAS_W; ec.height = CANVAS_H;
+  const ec_ctx = ec.getContext('2d');
+
+  // 白背景 + 薄いグリッド
+  ec_ctx.fillStyle = '#FFFFFF';
+  ec_ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  drawUnderlay(ec_ctx);
+  ec_ctx.strokeStyle = '#EEEEEE';
+  ec_ctx.lineWidth = 0.5;
+  for (let x=0; x<=CANVAS_W; x+=gridSize) {
+    ec_ctx.beginPath(); ec_ctx.moveTo(x,0); ec_ctx.lineTo(x,CANVAS_H); ec_ctx.stroke();
+  }
+  for (let y=0; y<=CANVAS_H; y+=gridSize) {
+    ec_ctx.beginPath(); ec_ctx.moveTo(0,y); ec_ctx.lineTo(CANVAS_W,y); ec_ctx.stroke();
+  }
+
+  // 全シェイプを書き込む (ctx を一時差し替え)
+  const savedCtx = ctx;
+  ctx = ec_ctx;
+  shapes.forEach(s => renderShape(ec_ctx, s));
+  ctx = savedCtx;
+
+  // スケールバー（右下）
+  const barLen = gridSize * 4;
+  const bx = CANVAS_W - barLen - 20, by = CANVAS_H - 24;
+  ec_ctx.strokeStyle = '#666'; ec_ctx.lineWidth = 2;
+  ec_ctx.beginPath();
+  ec_ctx.moveTo(bx, by); ec_ctx.lineTo(bx+barLen, by);
+  ec_ctx.moveTo(bx, by-5); ec_ctx.lineTo(bx, by+5);
+  ec_ctx.moveTo(bx+barLen, by-5); ec_ctx.lineTo(bx+barLen, by+5);
+  ec_ctx.stroke();
+  ec_ctx.fillStyle = '#444';
+  ec_ctx.font = '11px Hiragino Sans, sans-serif';
+  ec_ctx.textAlign = 'center';
+  ec_ctx.fillText(Math.round(barLen / pxPerM) + 'm', bx+barLen/2, by-8);
+  ec_ctx.textAlign = 'left';
+
+  // ダウンロード
+  const link = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  link.download = `間取り図_${date}.png`;
+  link.href = ec.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>
