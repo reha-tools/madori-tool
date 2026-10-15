@@ -490,7 +490,7 @@ window.addEventListener('load', () => {
   canvas.addEventListener('pointermove',   onPointerMove);
   canvas.addEventListener('pointerup',     onPointerUp);
   canvas.addEventListener('pointercancel', onPointerCancel);
-  blockTouchScroll(canvas);
+  blockTouchScroll(canvas, touchMoveFallback);
   canvas.addEventListener('contextmenu', onRightClick);
   canvas.addEventListener('dblclick', e => { if (lastPointerType === 'mouse') onDblClick(e); });
 
@@ -758,6 +758,7 @@ let lastTap = null;            // ダブルタップ判定用 { t, x, y }
 let lastPointerType = 'mouse';
 
 function onPointerDown(e) {
+  debugCount('pointerdown:' + e.pointerType);
   lastPointerType = e.pointerType;
   if (e.pointerType === 'touch') {
     if (penDown) return;
@@ -776,7 +777,9 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
+  debugCount('pointermove:' + e.pointerType);
   if (e.pointerType === 'touch') {
+    lastPointerMoveAt = Date.now();
     if (!touches.has(e.pointerId)) return;   // 無視している手のひらのタッチ
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
   }
@@ -785,6 +788,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp(e) {
+  debugCount('pointerup:' + e.pointerType);
   if (e.pointerType === 'pen') penDown = false;
   const wasTracked = touches.delete(e.pointerId);
   if (pinch) {
@@ -797,6 +801,7 @@ function onPointerUp(e) {
 }
 
 function onPointerCancel(e) {
+  debugCount('pointercancel:' + e.pointerType);
   if (e.pointerType === 'pen') penDown = false;
   touches.delete(e.pointerId);
   if (pinch) { if (!touches.size) pinch = null; return; }
@@ -805,10 +810,36 @@ function onPointerCancel(e) {
 
 // iPad の Safari は、指でなぞる操作をスクロールやズームとして先に受け取り、
 // 指を離すまで動きを届けないことがある。キャンバス上では止めて、描いている途中の線が見えるようにする
-function blockTouchScroll(target) {
+function blockTouchScroll(target, onTouchMove) {
   const stop = e => { if (e.cancelable) e.preventDefault(); };
   target.addEventListener('touchstart', stop, { passive: false });
-  target.addEventListener('touchmove', stop, { passive: false });
+  target.addEventListener('touchmove', e => { stop(e); if (onTouchMove) onTouchMove(e); }, { passive: false });
+}
+
+// 指の動きが pointermove で届かない iPad 向けの予備: touchmove から描きかけの線を動かす
+let lastPointerMoveAt = 0;
+function touchMoveFallback(e) {
+  debugCount('touchmove');
+  if (e.touches.length !== 1 || Date.now() - lastPointerMoveAt < 80 || !(drawing || moving)) return;
+  debugCount('touchmove→描画');
+  onMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+}
+
+// URL の最後に ?debug=1 を付けたときだけ、受け取った操作の回数を左下に出す（不具合調査用）
+const DEBUG = new URLSearchParams(location.search).has('debug');
+const debugCounts = {};
+function debugCount(key) {
+  if (!DEBUG) return;
+  debugCounts[key] = (debugCounts[key] || 0) + 1;
+  let box = document.getElementById('debug-box');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'debug-box';
+    box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:999;background:rgba(0,0,0,.85);color:#7CFC00;' +
+      'font:14px monospace;padding:8px 12px;border-radius:6px;pointer-events:none;white-space:pre';
+    document.body.append(box);
+  }
+  box.textContent = Object.entries(debugCounts).map(([k, v]) => `${k}: ${v}`).join('\n');
 }
 
 // 描きかけ・掴みかけの操作をなかったことにする
@@ -1258,6 +1289,7 @@ function drawOrder() {
 }
 
 function redraw() {
+  if (drawing || moving) debugCount('描き直し（操作中）');
   if (selected && !shapes.includes(selected)) selected = null;   // 消去・元に戻すで無くなった場合
   ctx.fillStyle = sketchMode ? '#FDF6E3' : '#FAFAF0';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
