@@ -618,7 +618,7 @@ function onMove(e) {
     dragSelected(moving.mode === 'rotate' ? getMouse(e, true) : p);
     return;
   }
-  if (drawing) redraw();
+  if (drawing) requestRedraw();
 }
 
 function onUp(e) {
@@ -759,6 +759,7 @@ let lastPointerType = 'mouse';
 
 function onPointerDown(e) {
   debugCount('pointerdown:' + e.pointerType);
+  debugTiming(e, 'down');
   lastPointerType = e.pointerType;
   if (e.pointerType === 'touch') {
     if (penDown) return;
@@ -778,6 +779,7 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   debugCount('pointermove:' + e.pointerType);
+  debugTiming(e, 'move');
   if (e.pointerType === 'touch') {
     lastPointerMoveAt = Date.now();
     if (!touches.has(e.pointerId)) return;   // 無視している手のひらのタッチ
@@ -788,7 +790,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp(e) {
-  debugCount('pointerup:' + e.pointerType);
+  if (e.pointerType === 'mouse') debugCount('pointerup:mouse'); else debugTiming(e, 'up');
   if (e.pointerType === 'pen') penDown = false;
   const wasTracked = touches.delete(e.pointerId);
   if (pinch) {
@@ -825,9 +827,45 @@ function touchMoveFallback(e) {
   onMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
 }
 
+// なぞっている間の描き直しは、画面の更新（1コマ）ごとに1回にまとめる。
+// 指の動きのたびに描き直すと、iPad では画面に反映する暇がなくなることがある
+let redrawQueued = false;
+function requestRedraw() {
+  if (redrawQueued) return;
+  redrawQueued = true;
+  requestAnimationFrame(() => {
+    redrawQueued = false;
+    redraw();
+    debugCount('画面に反映（コマ）');
+  });
+}
+
 // URL の最後に ?debug=1 を付けたときだけ、受け取った操作の回数を左下に出す（不具合調査用）
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const debugCounts = {};
+let debugT0 = 0, debugFirstMove = null;
+function debugTiming(e, phase) {
+  if (!DEBUG || e.pointerType === 'mouse') return;
+  const now = performance.now();
+  if (phase === 'down') { debugT0 = now; debugFirstMove = null; }
+  if (phase === 'move' && debugFirstMove === null) debugFirstMove = Math.round(now - debugT0);
+  if (phase === 'up') {
+    debugCounts['最初の動きが届くまで(ms)'] = debugFirstMove;
+    debugCounts['指を離すまで(ms)'] = Math.round(now - debugT0);
+    debugCount('pointerup:' + e.pointerType);
+  }
+  let dot = document.getElementById('debug-dot');
+  if (!dot) {
+    dot = document.createElement('div');
+    dot.id = 'debug-dot';
+    dot.style.cssText = 'position:fixed;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;' +
+      'background:rgba(255,0,0,.6);z-index:999;pointer-events:none';
+    document.body.append(dot);
+  }
+  dot.style.left = e.clientX + 'px';
+  dot.style.top = e.clientY + 'px';
+}
+
 function debugCount(key) {
   if (!DEBUG) return;
   debugCounts[key] = (debugCounts[key] || 0) + 1;
@@ -1018,7 +1056,7 @@ function dragSelected(p) {
   }
   if (JSON.stringify(s) === before) return;
   moving.moved = true;
-  redraw();
+  requestRedraw();
 }
 
 // ── 設備（スタンプ）の向きと大きさ ──
@@ -2697,7 +2735,7 @@ function draftSummary() {
 function renderOutputSection() {
   const status = el('div', { class: 'rp-status' });
   const preview = el('div', { class: 'rp-preview' });
-  setTimeout(() => renderPreview(preview), 0);
+  setTimeout(() => renderReportPreview(preview), 0);
   return [
     h2('報告書を作る'),
     hint('A4 で、1枚目に基本情報・間取り図・まとめ、2枚目に場所ごとの一覧表が入ります（写真が多いときは写真ページが付きます）。' +
@@ -3247,7 +3285,7 @@ function drawTextElement(c, e, dpi) {
 }
 
 let previewToken = 0;
-async function renderPreview(container) {
+async function renderReportPreview(container) {
   const token = ++previewToken;
   container.replaceChildren(el('div', { class: 'rp-hint' }, 'プレビューを作っています…'));
   try {
