@@ -490,6 +490,7 @@ window.addEventListener('load', () => {
   canvas.addEventListener('pointermove',   onPointerMove);
   canvas.addEventListener('pointerup',     onPointerUp);
   canvas.addEventListener('pointercancel', onPointerCancel);
+  blockTouchScroll(canvas);
   canvas.addEventListener('contextmenu', onRightClick);
   canvas.addEventListener('dblclick', e => { if (lastPointerType === 'mouse') onDblClick(e); });
 
@@ -800,6 +801,14 @@ function onPointerCancel(e) {
   touches.delete(e.pointerId);
   if (pinch) { if (!touches.size) pinch = null; return; }
   cancelAction();
+}
+
+// iPad の Safari は、指でなぞる操作をスクロールやズームとして先に受け取り、
+// 指を離すまで動きを届けないことがある。キャンバス上では止めて、描いている途中の線が見えるようにする
+function blockTouchScroll(target) {
+  const stop = e => { if (e.cancelable) e.preventDefault(); };
+  target.addEventListener('touchstart', stop, { passive: false });
+  target.addEventListener('touchmove', stop, { passive: false });
 }
 
 // 描きかけ・掴みかけの操作をなかったことにする
@@ -2823,6 +2832,7 @@ function initReport() {
   cv.addEventListener('pointermove', peMove);
   cv.addEventListener('pointerup', peUp);
   cv.addEventListener('pointercancel', () => { if (photoEd) { photoEd.pointer = null; photoEd.cur = null; peRedraw(); } });
+  blockTouchScroll(cv);
   document.getElementById('pe-tools').addEventListener('click', e => {
     const b = e.target.closest('[data-tool]');
     if (!b) return;
