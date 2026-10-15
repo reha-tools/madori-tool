@@ -139,18 +139,104 @@ body {
   background: #313244; border: 1px solid #45475a; border-radius: 5px;
   padding: 7px; cursor: pointer; color: #cdd6f4; font-size: 12px;
 }
+
+/* ── 画面の切り替え（間取り図／報告書）── */
+.view-tab {
+  background: transparent; color: #a6adc8;
+  border: 1.5px solid #45475a; border-radius: 16px;
+  padding: 4px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+  touch-action: manipulation;
+}
+.view-tab.active { background: #89b4fa; border-color: #89b4fa; color: #1e1e2e; }
+@media (pointer: coarse) { .view-tab { padding: 8px 16px; font-size: 14px; } }
+
+/* ── 報告書 ── */
+#report { flex: 1; display: none; overflow: hidden; background: #181825; color: #cdd6f4; }
+#rp-nav {
+  width: 180px; flex-shrink: 0; overflow-y: auto;
+  background: #252535; border-right: 1px solid #3a3a55; padding: 8px 6px;
+}
+.rp-nav-btn {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  width: 100%; margin-bottom: 3px; padding: 10px; border-radius: 6px;
+  background: #313244; border: 1.5px solid transparent; color: #cdd6f4;
+  font-size: 13px; text-align: left; cursor: pointer; touch-action: manipulation;
+}
+.rp-nav-btn.active { background: #1e4080; border-color: #89b4fa; }
+.rp-nav-btn .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.rp-nav-btn.filled .dot { background: #a6e3a1; }
+#rp-body { flex: 1; overflow-y: auto; padding: 18px 22px 80px; -webkit-overflow-scrolling: touch; }
+.rp-h2 { font-size: 19px; margin-bottom: 4px; }
+.rp-hint { color: #a6adc8; font-size: 12px; margin-bottom: 16px; line-height: 1.6; max-width: 760px; }
+.rp-item { margin-bottom: 18px; }
+.rp-item-label { font-size: 13px; font-weight: 700; color: #89b4fa; margin-bottom: 8px; }
+.rp-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.rp-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; max-width: 360px; }
+.rp-field.wide { max-width: 760px; }
+.rp-label { font-size: 12px; color: #bac2de; }
+.rp-input, .rp-text, .rp-num {
+  background: #11111b; color: #cdd6f4; border: 1px solid #45475a; border-radius: 6px;
+  padding: 9px 10px; font-size: 15px; font-family: inherit;
+  user-select: text; -webkit-user-select: text;
+}
+.rp-text { min-height: 96px; resize: vertical; line-height: 1.6; }
+.rp-num { width: 76px; text-align: right; }
+.rp-num-field, .rp-choice { display: inline-flex; align-items: center; gap: 6px; }
+.rp-unit { font-size: 13px; color: #a6adc8; }
+.chip {
+  padding: 8px 14px; border-radius: 18px; font-size: 14px; cursor: pointer;
+  background: #313244; border: 1.5px solid #45475a; color: #cdd6f4; touch-action: manipulation;
+}
+.chip.on { background: #1e4e38; border-color: #2d9f72; color: #c9f5de; font-weight: 700; }
+.chip.phrase { font-size: 13px; padding: 7px 12px; border-radius: 8px; }
+.rp-phrases { margin: -6px 0 16px; max-width: 760px; }
+.rp-photos { display: flex; flex-wrap: wrap; gap: 10px; }
+.rp-photo-wrap { position: relative; }
+.rp-photo { display: block; width: 160px; height: 120px; background: #11111b; border: 1px solid #45475a; border-radius: 6px; cursor: pointer; object-fit: contain; }
+.rp-photo-no { position: absolute; left: 6px; top: 6px; background: rgba(0,0,0,0.65); color: #fff; font-size: 11px; padding: 1px 7px; border-radius: 8px; pointer-events: none; }
+.rp-add-photo { width: 160px; height: 120px; border: 2px dashed #45475a; border-radius: 6px; background: transparent; color: #a6adc8; font-size: 15px; cursor: pointer; touch-action: manipulation; }
+.rp-btn { padding: 11px 18px; border-radius: 8px; background: #313244; border: 1px solid #45475a; color: #cdd6f4; font-size: 14px; cursor: pointer; touch-action: manipulation; }
+.rp-btn.primary { background: #1e4e38; border-color: #2d9f72; color: #c9f5de; font-weight: 700; }
+.rp-pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 28px; max-width: 760px; }
+.rp-status { margin: 12px 0 18px; font-size: 13px; color: #f9e2af; min-height: 1em; max-width: 760px; }
+.rp-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; max-width: 760px; }
+.rp-preview canvas { width: 100%; height: auto; background: #fff; border-radius: 3px; box-shadow: 0 1px 4px rgba(0,0,0,0.5); cursor: zoom-in; }
+.rp-preview canvas.big { grid-column: 1 / -1; cursor: zoom-out; }
+@media (max-width: 700px) {
+  #report { flex-direction: column; }
+  #rp-nav { width: auto; display: flex; gap: 4px; overflow-x: auto; border-right: none; border-bottom: 1px solid #3a3a55; }
+  .rp-nav-btn { width: auto; white-space: nowrap; margin: 0; }
+}
+
+/* ── 写真への描き込み ── */
+#pe { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 300; background: #11111b; flex-direction: column; }
+#pe.show { display: flex; }
+.pe-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 8px 12px; background: #252535; border-bottom: 1px solid #3a3a55; }
+.pe-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pe-btn { padding: 8px 12px; border-radius: 6px; background: #313244; border: 1.5px solid #45475a; color: #cdd6f4; font-size: 14px; cursor: pointer; touch-action: manipulation; }
+.pe-btn.active { background: #1e4080; border-color: #89b4fa; }
+.pe-btn.green { background: #1e4e38; border-color: #2d9f72; color: #c9f5de; font-weight: 700; }
+.pe-btn.red { background: #4e1e1e; border-color: #9f2d2d; color: #e6a8a8; }
+.pe-color { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #45475a; cursor: pointer; touch-action: manipulation; }
+.pe-color.active { border-color: #ffffff; }
+.pe-stage { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 10px; }
+#pe-canvas { touch-action: none; background: #000; }
 </style>
 </head>
 <body>
 
 <!-- 上部バー -->
 <div id="topbar">
-  <h1>🏠 家屋調査 間取り図</h1>
+  <h1>🏠 家屋調査</h1>
+  <button class="view-tab active" data-view="plan" onclick="showView('plan')">間取り図</button>
+  <button class="view-tab" data-view="report" onclick="showView('report')">報告書</button>
   <div class="sep"></div>
-  <button class="tb-btn" onclick="document.getElementById('drawingFile').click()" title="保存した間取り図（.json）を開いて続きを編集する">📂 開く</button>
+  <button class="tb-btn" onclick="newCase()" title="間取り図と報告書を消して、次の方の調査を始める">🆕 新規</button>
+  <button class="tb-btn" onclick="document.getElementById('drawingFile').click()" title="保存した家屋調査（.json）を開いて続きを編集する">📂 開く</button>
   <input type="file" id="drawingFile" accept=".json,application/json" style="display:none">
-  <button class="tb-btn" onclick="saveDrawing()" title="あとで続きを編集できる形式（.json）で保存する（Ctrl+S）">💾 保存</button>
+  <button class="tb-btn" onclick="saveDrawing()" title="間取り図と報告書を、あとで続きを編集できる形式（.json）で保存する（Ctrl+S）">💾 保存</button>
   <div class="sep"></div>
+  <span id="planTools" style="display:contents">
   <button class="tb-btn" onclick="undoLast()" title="Ctrl+Z">↩ 元に戻す</button>
   <button class="tb-btn red" onclick="clearAll()">🗑 全消去</button>
   <div class="sep"></div>
@@ -182,6 +268,7 @@ body {
   <button id="sketchBtn" class="tb-btn" onclick="toggleSketch()" title="手書き風スタイルに切り替え">✏️ スケッチ風</button>
   <button class="tb-btn green" onclick="exportPNG()">📥 PNG保存</button>
   <button class="tb-btn" onclick="document.getElementById('help-panel').classList.add('show')">? 使い方</button>
+  </span>
 </div>
 
 <!-- メイン -->
@@ -301,6 +388,39 @@ body {
   </div>
 </div>
 
+<!-- 報告書 -->
+<div id="report">
+  <nav id="rp-nav"></nav>
+  <div id="rp-body"></div>
+</div>
+
+<!-- 写真への描き込み -->
+<div id="pe">
+  <div class="pe-bar">
+    <div class="pe-group" id="pe-tools">
+      <button class="pe-btn active" data-tool="pen">✏️ ペン</button>
+      <button class="pe-btn" data-tool="arrow">➡ 矢印</button>
+      <button class="pe-btn" data-tool="line">／ 直線</button>
+      <button class="pe-btn" data-tool="rect">▢ 四角</button>
+      <button class="pe-btn" data-tool="text">Ａ 文字</button>
+    </div>
+    <div class="pe-group" id="pe-colors">
+      <button class="pe-color active" data-color="#E53935" style="background:#E53935" title="赤"></button>
+      <button class="pe-color" data-color="#1E88E5" style="background:#1E88E5" title="青"></button>
+      <button class="pe-color" data-color="#FDD835" style="background:#FDD835" title="黄"></button>
+      <button class="pe-color" data-color="#FFFFFF" style="background:#FFFFFF" title="白"></button>
+    </div>
+    <div class="pe-group">
+      <button class="pe-btn" onclick="peUndo()">↩ 元に戻す</button>
+      <button class="pe-btn" onclick="peMakeFirst()" title="この写真を一覧表に載せる1枚目にする">⭐ 1枚目にする</button>
+      <button class="pe-btn red" onclick="peDeletePhoto()">🗑 削除</button>
+      <button class="pe-btn" onclick="peClose(false)">やめる</button>
+      <button class="pe-btn green" onclick="peClose(true)">✓ 完了</button>
+    </div>
+  </div>
+  <div class="pe-stage"><canvas id="pe-canvas"></canvas></div>
+</div>
+
 <!-- ヘルプパネル -->
 <div id="help-panel">
   <div id="help-box">
@@ -324,6 +444,7 @@ body {
       <tr><td>開く・保存</td><td>「保存」で続きを編集できるファイル（.json）を書き出し、「開く」で読み込む。iPadで描いてパソコンで仕上げるときに使う</td></tr>
       <tr><td>自動保存</td><td>描きかけの図はこの端末のブラウザに自動で残り、次に開いたとき続きから描ける</td></tr>
       <tr><td>表示の拡大</td><td>－／＋／全体ボタン。iPadでは2本指でつまんで拡大縮小、2本指でなぞってスクロール</td></tr>
+      <tr><td>報告書</td><td>上の「報告書」で、場所ごとの評価・寸法・写真を入力し、A4で2枚の報告書（PowerPoint・PDF）を作る</td></tr>
       <tr><td>iPad</td><td>指やApple Pencilで描ける。寸法の数値入力はダブルクリックの代わりにダブルタップ</td></tr>
       <tr><td>Ctrl+Z</td><td>元に戻す（50回まで）</td></tr>
     </table>
@@ -373,8 +494,10 @@ window.addEventListener('load', () => {
   canvas.addEventListener('dblclick', e => { if (lastPointerType === 'mouse') onDblClick(e); });
 
   document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undoLast(); }
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveDrawing(); }
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key === 's') { e.preventDefault(); saveDrawing(); return; }
+    if (e.target.closest && e.target.closest('input, textarea')) return;   // 入力欄では文字の取り消しを優先
+    if (mod && e.key === 'z' && currentView === 'plan') { e.preventDefault(); undoLast(); }
   });
 
   document.getElementById('snapCb').addEventListener('change', e => { snapOn = e.target.checked; });
@@ -401,6 +524,7 @@ window.addEventListener('load', () => {
     loadUnderlayFile(e.dataTransfer.files[0]);
   });
   document.addEventListener('paste', e => {
+    if (currentView !== 'plan') return;
     const item = [...e.clipboardData.items].find(i => i.type.startsWith('image/'));
     if (item) loadUnderlayFile(item.getAsFile());
   });
@@ -415,6 +539,7 @@ window.addEventListener('load', () => {
 
   redraw();
   if (COARSE) zoomFit();
+  initReport();
   restoreAutosave();
 });
 
@@ -1835,23 +1960,32 @@ const SAVE_FORMAT = 'kaoku-madori';
 function buildSaveData() {
   return {
     format: SAVE_FORMAT,
-    version: 1,
+    version: 2,
     savedAt: new Date().toISOString(),
     shapes,
     scale: document.getElementById('scaleSel').value,
     sketchMode,
     calibration: calibrated ? pxPerM : null,
     underlay: underlay && { src: underlay.src, x: underlay.x, y: underlay.y, w: underlay.w, h: underlay.h, alpha: underlayAlpha },
+    report,
   };
 }
 
 function saveDrawing() {
   const blob = new Blob([JSON.stringify(buildSaveData())], { type: 'application/json' });
+  downloadBlob(blob, safeFileName(`家屋調査_${report.basic.name.trim() || '氏名未入力'}_${report.basic.date || todayStr()}.json`));
+}
+
+function downloadBlob(blob, filename) {
   const link = document.createElement('a');
-  link.download = `間取り図_${new Date().toISOString().slice(0,10)}.json`;
+  link.download = filename;
   link.href = URL.createObjectURL(blob);
   link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+  setTimeout(() => URL.revokeObjectURL(link.href), 30000);
+}
+
+function safeFileName(name) {
+  return name.replace(/[\\/:*?"<>|]/g, '_');
 }
 
 function loadDrawingFile(file) {
@@ -1864,7 +1998,7 @@ function loadDrawingFile(file) {
       alert('このファイルは開けません。間取り図ツールの「保存」で作った .json ファイルを選んでください。');
       return;
     }
-    if ((shapes.length || underlay) && !confirm('いま描いている図は、開いた図に置き換わります。よろしいですか？')) return;
+    if ((shapes.length || underlay || reportHasContent()) && !confirm('いま入力している間取り図と報告書は、開いたものに置き換わります。よろしいですか？')) return;
     applySaveData(data);
   };
   reader.readAsText(file);
@@ -1874,6 +2008,9 @@ function loadDrawingFile(file) {
 function applySaveData(data) {
   shapes = data.shapes.filter(s => s && typeof s.type === 'string');
   undoStack = [];
+  report = normalizeReport(data.report);
+  reportRev++;
+  if (currentView === 'report') renderReport();
   selected = null; moving = null; drawing = false; pendingTap = null;
   const sel = document.getElementById('scaleSel');
   sel.value = data.scale || '40';
@@ -1927,7 +2064,7 @@ function autosaveNow() {
   if (!autosaveReady) return;
   const data = buildSaveData();
   // 中身が変わっていなければ書き込まない（下絵は長いので長さだけ比べる）
-  const key = JSON.stringify({ ...data, savedAt: 0, underlay: data.underlay && { ...data.underlay, src: data.underlay.src.length } });
+  const key = JSON.stringify({ ...data, savedAt: 0, report: reportRev, underlay: data.underlay && { ...data.underlay, src: data.underlay.src.length } });
   if (key === lastAutosaveKey) return;
   lastAutosaveKey = key;
   try {
@@ -1938,7 +2075,7 @@ function autosaveNow() {
 async function restoreAutosave() {
   let data = null;
   try { data = await idbRequest('readonly', st => st.get('current')); } catch (err) { /* 読めなければ新規で始める */ }
-  if (data && data.format === SAVE_FORMAT && (data.shapes?.length || data.underlay)) {
+  if (data && data.format === SAVE_FORMAT && (data.shapes?.length || data.underlay || reportHasContent(normalizeReport(data.report)))) {
     const when = new Date(data.savedAt).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     if (confirm(`前回描いていた図（${when}）が残っています。続きから描きますか？\n「キャンセル」で新しく始めます。`)) {
       applySaveData(data);
@@ -1950,7 +2087,8 @@ async function restoreAutosave() {
 // ================================================================
 //  PNG エクスポート
 // ================================================================
-function exportPNG() {
+// 間取り図を白地の画像に描く（PNG保存と報告書で共通）。crop で描いてある範囲だけを切り出す
+function renderPlanImage({ grid = true, crop = false, scaleBar = true } = {}) {
   const ec = document.createElement('canvas');
   ec.width = CANVAS_W; ec.height = CANVAS_H;
   const ec_ctx = ec.getContext('2d');
@@ -1959,13 +2097,15 @@ function exportPNG() {
   ec_ctx.fillStyle = '#FFFFFF';
   ec_ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
   drawUnderlay(ec_ctx);
-  ec_ctx.strokeStyle = '#EEEEEE';
-  ec_ctx.lineWidth = 0.5;
-  for (let x=0; x<=CANVAS_W; x+=gridSize) {
-    ec_ctx.beginPath(); ec_ctx.moveTo(x,0); ec_ctx.lineTo(x,CANVAS_H); ec_ctx.stroke();
-  }
-  for (let y=0; y<=CANVAS_H; y+=gridSize) {
-    ec_ctx.beginPath(); ec_ctx.moveTo(0,y); ec_ctx.lineTo(CANVAS_W,y); ec_ctx.stroke();
+  if (grid) {
+    ec_ctx.strokeStyle = '#EEEEEE';
+    ec_ctx.lineWidth = 0.5;
+    for (let x=0; x<=CANVAS_W; x+=gridSize) {
+      ec_ctx.beginPath(); ec_ctx.moveTo(x,0); ec_ctx.lineTo(x,CANVAS_H); ec_ctx.stroke();
+    }
+    for (let y=0; y<=CANVAS_H; y+=gridSize) {
+      ec_ctx.beginPath(); ec_ctx.moveTo(0,y); ec_ctx.lineTo(CANVAS_W,y); ec_ctx.stroke();
+    }
   }
 
   // 全シェイプを書き込む (ctx を一時差し替え)
@@ -1974,27 +2114,1194 @@ function exportPNG() {
   drawOrder().forEach(s => renderShape(ec_ctx, s));
   ctx = savedCtx;
 
-  // スケールバー（右下）
-  const barLen = gridSize * 4;
-  const bx = CANVAS_W - barLen - 20, by = CANVAS_H - 24;
-  ec_ctx.strokeStyle = '#666'; ec_ctx.lineWidth = 2;
-  ec_ctx.beginPath();
-  ec_ctx.moveTo(bx, by); ec_ctx.lineTo(bx+barLen, by);
-  ec_ctx.moveTo(bx, by-5); ec_ctx.lineTo(bx, by+5);
-  ec_ctx.moveTo(bx+barLen, by-5); ec_ctx.lineTo(bx+barLen, by+5);
-  ec_ctx.stroke();
-  ec_ctx.fillStyle = '#444';
-  ec_ctx.font = '11px Hiragino Sans, sans-serif';
-  ec_ctx.textAlign = 'center';
-  ec_ctx.fillText(Math.round(barLen / pxPerM) + 'm', bx+barLen/2, by-8);
-  ec_ctx.textAlign = 'left';
+  if (!crop) {
+    if (scaleBar) drawScaleBar(ec_ctx, CANVAS_W - 20, CANVAS_H - 24);
+    return ec;
+  }
+  const b = planBounds();
+  if (!b) return null;
+  const pad = 30;
+  const x0 = Math.max(0, Math.floor(b.x1 - pad)), y0 = Math.max(0, Math.floor(b.y1 - pad));
+  const x1 = Math.min(CANVAS_W, Math.ceil(b.x2 + pad)), y1 = Math.min(CANVAS_H, Math.ceil(b.y2 + pad + (scaleBar ? 30 : 0)));
+  const out = document.createElement('canvas');
+  out.width = x1 - x0; out.height = y1 - y0;
+  const oc = out.getContext('2d');
+  oc.drawImage(ec, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+  if (scaleBar) drawScaleBar(oc, out.width - 12, out.height - 14);
+  return out;
+}
 
+// スケールバー（右下）。画像が小さいときは短くする
+function drawScaleBar(c, right, bottom) {
+  let cells = 4;
+  while (cells > 1 && gridSize * cells > right * 0.5) cells /= 2;
+  const barLen = gridSize * cells;
+  const bx = right - barLen, by = bottom;
+  c.strokeStyle = '#666'; c.lineWidth = 2;
+  c.beginPath();
+  c.moveTo(bx, by); c.lineTo(bx+barLen, by);
+  c.moveTo(bx, by-5); c.lineTo(bx, by+5);
+  c.moveTo(bx+barLen, by-5); c.lineTo(bx+barLen, by+5);
+  c.stroke();
+  c.fillStyle = '#444';
+  c.font = '11px Hiragino Sans, sans-serif';
+  c.textAlign = 'center';
+  c.fillText(+(barLen / pxPerM).toFixed(1) + 'm', bx+barLen/2, by-8);
+  c.textAlign = 'left';
+}
+
+// 描いてあるものが収まる範囲（なければ null）
+function planBounds() {
+  let b = null;
+  const add = (x1, y1, x2, y2) => {
+    b = b ? { x1: Math.min(b.x1, x1), y1: Math.min(b.y1, y1), x2: Math.max(b.x2, x2), y2: Math.max(b.y2, y2) } : { x1, y1, x2, y2 };
+  };
+  if (underlay) add(underlay.x, underlay.y, underlay.x + underlay.w, underlay.y + underlay.h);
+  for (const s of shapes) {
+    if ('x1' in s) {
+      add(Math.min(s.x1, s.x2) - 25, Math.min(s.y1, s.y2) - 25, Math.max(s.x1, s.x2) + 25, Math.max(s.y1, s.y2) + 25);
+    } else if (s.type === 'stamp') {
+      const c = stampCenter(s), hh = stampHalfHeight(s);
+      const hw = Math.max(stampHalfWidth(s), (STAMP_LABEL[s.subtype] || '').length * 5.5);
+      add(c.x - hw, c.y - hh, c.x + hw, c.y + hh + 20);
+    } else if (s.type === 'room') {
+      add(s.x, s.y, s.x + s.w, s.y + s.h);
+    } else if (s.type === 'swing_door') {
+      add(s.x - s.len, s.y - s.len, s.x + s.len, s.y + s.len);
+    } else if (s.r) {
+      add(s.x - s.r, s.y - s.r - 22, s.x + s.r, s.y + s.r);
+    } else if (s.type === 'text') {
+      const size = s.size || 14;
+      ctx.font = `${size}px Hiragino Sans, sans-serif`;
+      add(s.x, s.y - size, s.x + ctx.measureText(s.text).width, s.y + 4);
+    }
+  }
+  return b;
+}
+
+function stampHalfWidth(s) {
+  const a = (s.rot || 0) * Math.PI / 180;
+  return Math.abs(s.w / 2 * Math.cos(a)) + Math.abs(s.h / 2 * Math.sin(a));
+}
+
+function exportPNG() {
+  const ec = renderPlanImage();
   // ダウンロード
   const link = document.createElement('a');
   const date = new Date().toISOString().slice(0,10);
   link.download = `間取り図_${date}.png`;
   link.href = ec.toDataURL('image/png');
   link.click();
+}
+
+// ================================================================
+//  報告書（iPad で入力して、A4 2枚の PowerPoint・PDF を作る）
+// ================================================================
+
+// 評価の選択肢と色（以前の Word 版と同じ配色）
+const EVALS = [
+  { v: '自立',     bg: '375623', fg: 'FFFFFF' },
+  { v: '見守り',   bg: 'FFC000', fg: '3A2E00' },
+  { v: '一部介助', bg: 'ED7D31', fg: 'FFFFFF' },
+  { v: '全介助',   bg: 'C00000', fg: 'FFFFFF' },
+];
+
+// 場所ごとの主な寸法（どれも空欄でよい）。num=数値と単位 / choice=選ぶだけ
+const RAIL = { k: 'rail', label: '手すり', type: 'choice', options: ['あり', 'なし'] };
+const AREAS = [
+  { id: 'approach', title: '玄関前', fields: [
+    { k: 'steps', label: '段数',   type: 'num', unit: '段' },
+    { k: 'stepH', label: '段差',   type: 'num', unit: 'cm' },
+    { k: 'pathW', label: '通路幅', type: 'num', unit: 'cm' },
+    RAIL ] },
+  { id: 'entrance', title: '玄関', fields: [
+    { k: 'kamachi', label: '上がり框', type: 'num', unit: 'cm' },
+    { k: 'doorW',   label: '有効幅',   type: 'num', unit: 'cm' },
+    RAIL ] },
+  { id: 'corridor', title: '廊下', fields: [
+    { k: 'width', label: '幅',   type: 'num', unit: 'cm' },
+    { k: 'step',  label: '段差', type: 'num', unit: 'cm' },
+    RAIL ] },
+  { id: 'stairs', title: '階段', fields: [
+    { k: 'steps', label: '段数',      type: 'num', unit: '段' },
+    { k: 'riser', label: '1段の高さ', type: 'num', unit: 'cm' },
+    { k: 'tread', label: '踏み面',    type: 'num', unit: 'cm' },
+    { k: 'rail',  label: '手すり',    type: 'choice', options: ['なし', '右', '左', '両側'] } ] },
+  { id: 'living', title: '居室', fields: [
+    { k: 'doorW',  label: '入口幅',     type: 'num', unit: 'cm' },
+    { k: 'sill',   label: '敷居の段差', type: 'num', unit: 'cm' },
+    { k: 'chairH', label: '椅子の高さ', type: 'num', unit: 'cm' } ] },
+  { id: 'kitchen', title: '台所', fields: [
+    { k: 'sinkH', label: '流し台の高さ', type: 'num', unit: 'cm' } ] },
+  { id: 'bedroom', title: '寝室', fields: [
+    { k: 'bed',   label: '寝具',         type: 'choice', options: ['ベッド', '布団'] },
+    { k: 'bedH',  label: 'ベッドの高さ', type: 'num', unit: 'cm' },
+    { k: 'doorW', label: '入口幅',       type: 'num', unit: 'cm' },
+    { k: 'step',  label: '段差',         type: 'num', unit: 'cm' } ] },
+  { id: 'toilet', title: 'トイレ', fields: [
+    { k: 'type',  label: '便器',       type: 'choice', options: ['洋式', '和式'] },
+    { k: 'seatH', label: '便座の高さ', type: 'num', unit: 'cm' },
+    { k: 'doorW', label: '入口幅',     type: 'num', unit: 'cm' },
+    RAIL ] },
+  { id: 'dressing', title: '脱衣所', fields: [
+    { k: 'step',  label: '段差',   type: 'num', unit: 'cm' },
+    { k: 'doorW', label: '入口幅', type: 'num', unit: 'cm' },
+    RAIL ] },
+  { id: 'bath', title: '浴室', fields: [
+    { k: 'tubDepth', label: '浴槽の深さ', type: 'num', unit: 'cm' },
+    { k: 'straddle', label: 'またぎ高さ', type: 'num', unit: 'cm' },
+    { k: 'step',     label: '入口の段差', type: 'num', unit: 'cm' },
+    RAIL ] },
+];
+
+// よく使う文（タップで入る・もう一度タップで消える）
+const PHRASES = {
+  approach: {
+    problem: ['玄関前の階段の昇降に見守りが必要', 'アプローチに段差があり転倒の危険がある', '手すりがなく、つかまる所がない'],
+    plan:    ['階段に手すりを設置', 'スロープを設置', '段差に踏み台を設置', '屋外では杖・歩行器を使用'],
+  },
+  entrance: {
+    problem: ['上がり框が高く、昇降が困難', '靴の着脱時にふらつきがある', 'つかまる所がない'],
+    plan:    ['上がり框の横に縦手すりを設置', '踏み台（式台）を設置', '玄関に椅子を置き、座って靴を着脱'],
+  },
+  corridor: {
+    problem: ['手すりがなく伝い歩きができない', '敷居の段差でつまずく危険がある', '夜間は足元が暗い'],
+    plan:    ['廊下に横手すりを設置', '敷居の段差を解消', '足元灯を設置'],
+  },
+  stairs: {
+    problem: ['階段の昇降に見守りが必要', '手すりが片側にしかない', '段鼻が見えにくい'],
+    plan:    ['反対側にも手すりを設置', '段鼻に滑り止めを設置', '生活の場を1階に移す'],
+  },
+  living: {
+    problem: ['床からの立ち上がりが困難', '椅子が低く立ち上がりにくい', '物が多く動線が狭い'],
+    plan:    ['椅子の座面を高くする', '据え置き型の手すりを設置', '家具を移動して動線を確保'],
+  },
+  kitchen: {
+    problem: ['立ったままの調理で疲れやすい', '物の出し入れでふらつく'],
+    plan:    ['椅子に座って調理する', 'よく使う物を手の届く高さに置く'],
+  },
+  bedroom: {
+    problem: ['布団からの立ち上がりが困難', 'ベッドが低く立ち上がりにくい', '夜間のトイレ移動に不安がある'],
+    plan:    ['介護ベッドをレンタル', 'ベッド用手すり（介助バー）を設置', 'ポータブルトイレを設置'],
+  },
+  toilet: {
+    problem: ['便座からの立ち上がりが困難', '手すりがない', '入口の段差でつまずく危険がある', '開き戸で出入りしにくい'],
+    plan:    ['L字手すりを設置', '補高便座を設置', '入口の段差を解消', '扉を引き戸に変更'],
+  },
+  dressing: {
+    problem: ['立ったままの更衣でふらつく', '浴室との段差がある'],
+    plan:    ['椅子を置き、座って更衣', '縦手すりを設置'],
+  },
+  bath: {
+    problem: ['浴槽のまたぎに介助が必要', '洗い場の床が滑りやすい', '洗体時の座位が不安定'],
+    plan:    ['浴槽の出入り用に手すりを設置', 'シャワーチェアを購入', '浴槽台を購入', '滑り止めマットを敷く', 'バスボードを使用'],
+  },
+};
+const COMMON_PHRASES = {
+  problem: ['動作は自立して安全に行えている'],
+  plan:    ['動作指導を行った', '介助方法を家族に指導した'],
+};
+
+let report = newReport();
+let reportRev = 0;            // 報告書が変わるたびに増やす（自動保存の判定用）
+let rpSection = 'basic';
+let currentView = 'plan';
+const SETTINGS_KEY = 'kaoku-madori-settings';
+let settings = loadSettings();
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function newReport() {
+  return {
+    basic: { name: '', date: todayStr(), pt: '', ot: '', st: '', sw: '', tenure: '', building: '', floors: '', liveFloor: '' },
+    areas: {},
+    summary: { problems: '', actions: '', notes: '' },
+  };
+}
+
+// 保存ファイル・自動保存から読んだ報告書を、欠けた項目を補って取り込む
+function normalizeReport(r) {
+  const base = newReport();
+  if (!r || typeof r !== 'object') return base;
+  const out = { basic: { ...base.basic, ...(r.basic || {}) }, summary: { ...base.summary, ...(r.summary || {}) }, areas: {} };
+  for (const def of AREAS) {
+    const a = r.areas && r.areas[def.id];
+    if (!a) continue;
+    out.areas[def.id] = {
+      eval: a.eval || '',
+      values: { ...(a.values || {}) },
+      extras: (Array.isArray(a.extras) ? a.extras : []).filter(x => x && typeof x === 'object')
+        .map(x => ({ label: String(x.label ?? ''), value: String(x.value ?? ''), unit: String(x.unit ?? 'cm') })),
+      problem: a.problem || '',
+      plan: a.plan || '',
+      photos: (Array.isArray(a.photos) ? a.photos : [])
+        .filter(p => p && typeof p.src === 'string' && p.src.startsWith('data:image/'))
+        .map(p => ({ id: p.id || newId(), src: p.src, w: +p.w || 1, h: +p.h || 1, strokes: Array.isArray(p.strokes) ? p.strokes : [] })),
+    };
+  }
+  return out;
+}
+
+function newId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function areaData(id) {
+  if (!report.areas[id]) report.areas[id] = { eval: '', values: {}, extras: [], problem: '', plan: '', photos: [] };
+  if (!report.areas[id].extras) report.areas[id].extras = [];
+  return report.areas[id];
+}
+
+function areaHasContent(id, r = report) {
+  const a = r.areas[id];
+  return !!a && !!(a.eval || a.problem.trim() || a.plan.trim() || a.photos.length ||
+    Object.values(a.values).some(v => String(v ?? '').trim()) ||
+    (a.extras || []).some(x => String(x.value).trim()));
+}
+
+function reportHasContent(r = report) {
+  return !!(r.basic.name.trim() || AREAS.some(d => areaHasContent(d.id, r)) ||
+    r.summary.problems.trim() || r.summary.actions.trim() || r.summary.notes.trim());
+}
+
+function reportChanged() {
+  reportRev++;
+  updateReportNav();
+  scheduleAutosave();
+}
+
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (err) { return {}; }
+}
+
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (err) { /* 保存できない環境では何もしない */ }
+}
+
+// 次の方の調査を始める
+function newCase() {
+  if (!confirm('いまの間取り図と報告書を消して、新しく始めますか？\n（残しておきたい場合は、先に「保存」してください）')) return;
+  shapes = []; undoStack = []; selected = null;
+  removeUnderlay();
+  report = withLastStaff(newReport());
+  reportRev++;
+  rpSection = 'basic';
+  if (currentView === 'report') renderReport();
+  scheduleAutosave();
+}
+
+// ── 画面の切り替え ──
+function showView(v) {
+  currentView = v;
+  document.getElementById('main').style.display = v === 'plan' ? '' : 'none';
+  document.getElementById('report').style.display = v === 'report' ? 'flex' : 'none';
+  document.getElementById('planTools').style.display = v === 'plan' ? 'contents' : 'none';
+  document.querySelectorAll('.view-tab').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  if (v === 'report') {
+    renderReport();
+    // 報告書を作る部品を先に読み込んでおく（このあと電波がなくても作れるように）
+    loadLib('pptx').catch(() => {});
+    loadLib('pdf').catch(() => {});
+  } else {
+    redraw();
+  }
+}
+
+// ── 入力画面の部品 ──
+function el(tag, props = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (v === undefined || v === null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of children.flat()) if (c !== null && c !== undefined && c !== false) e.append(c);
+  return e;
+}
+
+const h2 = t => el('h2', { class: 'rp-h2' }, t);
+const hint = t => el('p', { class: 'rp-hint' }, t);
+
+function textField(label, value, oninput, o = {}) {
+  const input = el(o.multiline ? 'textarea' : 'input', {
+    class: o.multiline ? 'rp-text' : 'rp-input', type: o.multiline ? null : (o.type || 'text'), placeholder: o.placeholder,
+  });
+  input.value = value || '';
+  input.addEventListener('input', () => oninput(input.value));
+  return el('label', { class: 'rp-field' + (o.wide ? ' wide' : '') }, el('span', { class: 'rp-label' }, label), input);
+}
+
+function numInput(label, value, unit, onchange) {
+  const input = el('input', { class: 'rp-num', type: 'text', inputmode: 'decimal' });
+  input.value = value || '';
+  input.addEventListener('input', () => onchange(input.value));
+  input.addEventListener('change', () => { input.value = input.value.normalize('NFKC').trim(); onchange(input.value); });
+  return el('label', { class: 'rp-num-field' }, el('span', { class: 'rp-label' }, label), input, el('span', { class: 'rp-unit' }, unit));
+}
+
+// 選ぶだけの項目（選んだものをもう一度押すと外れる）
+function chipGroup(options, value, onpick, colors) {
+  const wrap = el('div', { class: 'rp-row' });
+  const draw = () => wrap.replaceChildren(...options.map(o => {
+    const on = value === o;
+    const b = el('button', { class: 'chip' + (on ? ' on' : ''), type: 'button', onclick: () => { value = on ? '' : o; onpick(value); draw(); } }, o);
+    if (on && colors && colors[o]) {
+      b.style.background = '#' + colors[o].bg; b.style.borderColor = '#' + colors[o].bg; b.style.color = '#' + colors[o].fg;
+    }
+    return b;
+  }));
+  draw();
+  return wrap;
+}
+
+// ── 報告書の画面 ──
+function reportSections() {
+  return [
+    { id: 'basic', title: '基本情報' },
+    ...AREAS.map(a => ({ id: a.id, title: a.title })),
+    { id: 'summary', title: 'まとめ' },
+    { id: 'output', title: '報告書を作る' },
+    { id: 'settings', title: '施設情報' },
+  ];
+}
+
+function renderReport() {
+  document.getElementById('rp-nav').replaceChildren(...reportSections().map(s =>
+    el('button', { class: 'rp-nav-btn' + (s.id === rpSection ? ' active' : ''), type: 'button', 'data-id': s.id, onclick: () => goSection(s.id) },
+      el('span', {}, s.title), el('span', { class: 'dot' }))));
+  updateReportNav();
+  const def = AREAS.find(a => a.id === rpSection);
+  const parts = rpSection === 'basic' ? renderBasicSection()
+    : def ? renderAreaSection(def)
+    : rpSection === 'summary' ? renderSummarySection()
+    : rpSection === 'output' ? renderOutputSection()
+    : renderSettingsSection();
+  document.getElementById('rp-body').replaceChildren(...parts, pager());
+}
+
+function goSection(id) {
+  rpSection = id;
+  renderReport();
+  document.getElementById('rp-body').scrollTop = 0;
+}
+
+// 入力済みの項目に印を付ける
+function updateReportNav() {
+  document.querySelectorAll('.rp-nav-btn').forEach(b => {
+    const id = b.dataset.id, s = report.summary;
+    const filled = id === 'basic' ? !!report.basic.name.trim()
+      : id === 'summary' ? !!(s.problems.trim() || s.actions.trim() || s.notes.trim())
+      : id === 'settings' ? !!footerText()
+      : areaHasContent(id);
+    b.classList.toggle('filled', filled);
+  });
+}
+
+function pager() {
+  const list = reportSections(), i = list.findIndex(s => s.id === rpSection);
+  return el('div', { class: 'rp-pager' },
+    i > 0 ? el('button', { class: 'rp-btn', type: 'button', onclick: () => goSection(list[i - 1].id) }, '← ' + list[i - 1].title) : el('span'),
+    i < list.length - 1 ? el('button', { class: 'rp-btn primary', type: 'button', onclick: () => goSection(list[i + 1].id) }, list[i + 1].title + ' →') : el('span'));
+}
+
+function renderBasicSection() {
+  const b = report.basic;
+  const set = k => v => {
+    b[k] = v;
+    if (['pt', 'ot', 'st', 'sw'].includes(k)) {   // 次の方の調査でも同じ担当者名を最初から入れておく
+      settings.lastStaff = { pt: b.pt, ot: b.ot, st: b.st, sw: b.sw };
+      saveSettings();
+    }
+    reportChanged();
+  };
+  return [
+    h2('基本情報'),
+    hint('報告書の1枚目の上に載ります。'),
+    textField('氏名（「〇〇様宅」の〇〇）', b.name, set('name'), { placeholder: '例）山田 太郎' }),
+    textField('実施日', b.date, set('date'), { type: 'date' }),
+    el('div', { class: 'rp-item' }, el('div', { class: 'rp-item-label' }, '担当'),
+      el('div', { class: 'rp-row' },
+        textField('理学療法士', b.pt, set('pt')), textField('作業療法士', b.ot, set('ot')),
+        textField('言語聴覚士', b.st, set('st')), textField('社会福祉士', b.sw, set('sw')))),
+    el('div', { class: 'rp-item' }, el('div', { class: 'rp-item-label' }, '自宅状況'),
+      chipGroup(['持家', '借家'], b.tenure, set('tenure')),
+      el('div', { style: 'height:8px' }),
+      chipGroup(['一戸建て', 'マンション・アパート'], b.building, set('building')),
+      el('div', { class: 'rp-row', style: 'margin-top:12px' },
+        numInput('建物', b.floors, '階建て（平屋は1）', set('floors')),
+        numInput('住んでいる階（集合住宅）', b.liveFloor, '階', set('liveFloor')))),
+  ];
+}
+
+function renderAreaSection(def) {
+  const a = areaData(def.id);
+  const evalColors = Object.fromEntries(EVALS.map(e => [e.v, e]));
+  return [
+    h2(def.title),
+    hint('入力したところだけが報告書に載ります。この場所に問題がなければ、空欄のままで大丈夫です。' +
+      '文章は下のボタンで入れるか、キーボードのマイクボタンで音声入力できます。'),
+    el('div', { class: 'rp-item' }, el('div', { class: 'rp-item-label' }, '評価'),
+      chipGroup(EVALS.map(e => e.v), a.eval, v => { a.eval = v; reportChanged(); }, evalColors)),
+    el('div', { class: 'rp-item' }, el('div', { class: 'rp-item-label' }, '主な寸法'),
+      el('div', { class: 'rp-row' }, ...def.fields.map(f => f.type === 'num'
+        ? numInput(f.label, a.values[f.k], f.unit, v => { a.values[f.k] = v; reportChanged(); })
+        : el('div', { class: 'rp-choice' }, el('span', { class: 'rp-label' }, f.label),
+            chipGroup(f.options, a.values[f.k] || '', v => { a.values[f.k] = v; reportChanged(); }))))),
+    extrasEditor(def.id),
+    ...phraseField('現状・問題点', 'problem', def.id, a, '例）上がり框が高く手すりがないため、昇降に見守りが必要'),
+    ...phraseField('改修案', 'plan', def.id, a, '例）上がり框の右側に縦手すりを設置。踏み台を置く'),
+    el('div', { class: 'rp-item' },
+      el('div', { class: 'rp-item-label' }, '写真（タップで描き込み。1枚目は一覧表に、2枚目以降は写真ページに載ります）'),
+      photoStrip(def.id)),
+  ];
+}
+
+// 文章欄と、その下のよく使う文のボタン（1行に1つずつ入る）
+function phraseField(title, key, areaId, a, placeholder) {
+  const field = textField(title, a[key], v => { a[key] = v; reportChanged(); }, { multiline: true, wide: true, placeholder });
+  const textarea = field.querySelector('textarea');
+  const list = [...((PHRASES[areaId] || {})[key] || []), ...COMMON_PHRASES[key]];
+  const wrap = el('div', { class: 'rp-row rp-phrases' });
+  const draw = () => {
+    const lines = a[key].split('\n').map(s => s.trim());
+    wrap.replaceChildren(...list.map(ph => {
+      const on = lines.includes(ph);
+      return el('button', { class: 'chip phrase' + (on ? ' on' : ''), type: 'button', onclick: () => {
+        const cur = a[key].split('\n').filter(s => s.trim());
+        a[key] = (on ? cur.filter(s => s.trim() !== ph) : [...cur, ph]).join('\n');
+        textarea.value = a[key];
+        reportChanged();
+        draw();
+      } }, (on ? '✓ ' : '＋ ') + ph);
+    }));
+  };
+  textarea.addEventListener('input', draw);
+  draw();
+  return [field, wrap];
+}
+
+// 主な寸法にない項目（段差など）を、場所ごとに好きなだけ足せるようにする
+const EXTRA_PRESETS = [['段差', 'cm'], ['有効幅', 'cm'], ['高さ', 'cm'], ['手すりの高さ', 'cm']];
+
+function extrasEditor(areaId) {
+  const a = areaData(areaId);
+  const list = el('div', { id: 'rp-extras' });
+  a.extras.forEach((x, i) => {
+    const name = el('input', { class: 'rp-input', type: 'text', placeholder: '項目名（例: 勝手口の段差）', style: 'width:220px' });
+    name.value = x.label;
+    name.addEventListener('input', () => { x.label = name.value; reportChanged(); });
+    const val = el('input', { class: 'rp-num', type: 'text', inputmode: 'decimal' });
+    val.value = x.value;
+    val.addEventListener('input', () => { x.value = val.value; reportChanged(); });
+    val.addEventListener('change', () => { val.value = val.value.normalize('NFKC').trim(); x.value = val.value; reportChanged(); });
+    const unit = el('input', { class: 'rp-input', type: 'text', style: 'width:64px' });
+    unit.value = x.unit;
+    unit.addEventListener('input', () => { x.unit = unit.value; reportChanged(); });
+    const del = el('button', { class: 'chip', type: 'button', title: 'この項目を消す',
+      onclick: () => { a.extras.splice(i, 1); reportChanged(); renderReport(); } }, '✕');
+    list.append(el('div', { class: 'rp-row', style: 'margin-bottom:8px' }, name, val, unit, del));
+  });
+  const add = (label, unit) => {
+    a.extras.push({ label, value: '', unit });
+    reportChanged();
+    renderReport();
+    const rows = document.querySelectorAll('#rp-extras .rp-row');
+    rows[rows.length - 1].querySelector(label ? '.rp-num' : '.rp-input').focus();
+  };
+  return el('div', { class: 'rp-item' },
+    el('div', { class: 'rp-item-label' }, '追加の寸法（段差など。いくつでも足せます）'),
+    list,
+    el('div', { class: 'rp-row' },
+      ...EXTRA_PRESETS.map(([l, u]) => el('button', { class: 'chip', type: 'button', onclick: () => add(l, u) }, '＋ ' + l)),
+      el('button', { class: 'chip', type: 'button', onclick: () => add('', 'cm') }, '＋ 自由に追加')));
+}
+
+function renderSummarySection() {
+  const s = report.summary;
+  const set = k => v => { s[k] = v; reportChanged(); };
+  return [
+    h2('まとめ'),
+    hint('「問題点」と「退院へ向けた取り組み」は1枚目の下に、「特記事項」は2枚目の表の下に載ります。' +
+      '空欄のままにすると、各場所の入力から自動でまとめて載せます。'),
+    el('div', { class: 'rp-item' }, el('button', { class: 'rp-btn', type: 'button', onclick: draftSummary }, '📝 各場所の入力から下書きを作る')),
+    textField('問題点', s.problems, set('problems'),
+      { multiline: true, wide: true, placeholder: '例）・玄関前に階段5段、手すりなし\n・浴槽のまたぎに介助が必要' }),
+    textField('退院へ向けた取り組み', s.actions, set('actions'),
+      { multiline: true, wide: true, placeholder: '例）・改修：玄関前階段に手すりを設置\n・購入：シャワーチェア、浴槽台\n・動作指導、介助指導' }),
+    textField('特記事項', s.notes, set('notes'), { multiline: true, wide: true }),
+  ];
+}
+
+function draftLines(key) {
+  return AREAS.filter(d => areaHasContent(d.id) && report.areas[d.id][key].trim())
+    .map(d => `・${d.title}：${report.areas[d.id][key].trim().replace(/\s*\n+\s*/g, '、')}`).join('\n');
+}
+
+// 各場所の「現状・問題点」「改修案」を、まとめの下書きにする
+function draftSummary() {
+  const s = report.summary;
+  const problems = draftLines('problem'), actions = draftLines('plan');
+  if (!problems && !actions) { alert('各場所の「現状・問題点」「改修案」がまだ入力されていません。'); return; }
+  if ((s.problems.trim() || s.actions.trim()) && !confirm('いまの「問題点」「退院へ向けた取り組み」を、下書きで置き換えます。よろしいですか？')) return;
+  s.problems = problems;
+  s.actions = actions;
+  reportChanged();
+  renderReport();
+}
+
+function renderOutputSection() {
+  const status = el('div', { class: 'rp-status' });
+  const preview = el('div', { class: 'rp-preview' });
+  setTimeout(() => renderPreview(preview), 0);
+  return [
+    h2('報告書を作る'),
+    hint('A4 で、1枚目に基本情報・間取り図・まとめ、2枚目に場所ごとの一覧表が入ります（写真が多いときは写真ページが付きます）。' +
+      '作ったファイルは iPad の「ファイル」アプリの「ダウンロード」に入るので、AirDrop などでパソコンへ送って印刷・手直ししてください。' +
+      '作るときはインターネット接続が必要です。'),
+    !footerText() && el('p', { class: 'rp-hint', style: 'color:#f9e2af' }, '施設情報がまだ登録されていないため、報告書の下の欄が空になります。　',
+      el('button', { class: 'rp-btn', type: 'button', onclick: () => goSection('settings') }, '施設情報を登録する')),
+    el('div', { class: 'rp-row' },
+      el('button', { class: 'rp-btn primary', type: 'button', onclick: () => exportReport('pptx', status) }, '📊 PowerPoint を作る'),
+      el('button', { class: 'rp-btn primary', type: 'button', onclick: () => exportReport('pdf', status) }, '📄 PDF を作る')),
+    status,
+    el('div', { class: 'rp-item-label' }, 'プレビュー（タップで拡大）'),
+    preview,
+  ];
+}
+
+function renderSettingsSection() {
+  const field = (label, key, ph) => textField(label, settings[key], v => { settings[key] = v; saveSettings(); updateReportNav(); }, { placeholder: ph });
+  return [
+    h2('施設情報'),
+    hint('報告書の下の欄に入ります。ここに入れた内容はこの端末にだけ残り、公開ページや「保存」したファイルには入りません。'),
+    field('法人名', 'org', '例）社会医療法人社団 〇〇会'),
+    field('病院名', 'hospital', '例）〇〇病院'),
+    field('部署', 'dept', '例）リハビリテーション科'),
+    field('電話番号', 'phone', '例）03-0000-0000'),
+  ];
+}
+
+// ── 写真 ──
+const imgCache = new Map();
+function loadImg(src) {
+  if (!imgCache.has(src)) {
+    imgCache.set(src, new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    }));
+  }
+  return imgCache.get(src);
+}
+
+function photoStrip(areaId) {
+  const a = areaData(areaId);
+  const strip = el('div', { class: 'rp-photos' });
+  a.photos.forEach((p, i) => {
+    const cv = el('canvas', { class: 'rp-photo', title: 'タップして描き込み' });
+    drawPhotoThumb(cv, p);
+    cv.addEventListener('click', () => openPhotoEditor(areaId, i));
+    strip.append(el('div', { class: 'rp-photo-wrap' }, cv, el('span', { class: 'rp-photo-no' }, i === 0 ? '1枚目（一覧表）' : String(i + 1))));
+  });
+  const input = el('input', { type: 'file', accept: 'image/*', multiple: true, style: 'display:none' });
+  input.addEventListener('change', async () => { await addPhotos(areaId, [...input.files]); input.value = ''; });
+  strip.append(el('button', { class: 'rp-add-photo', type: 'button', onclick: () => input.click() }, '＋ 写真'), input);
+  return strip;
+}
+
+async function addPhotos(areaId, files) {
+  const a = areaData(areaId);
+  for (const f of files) {
+    try { a.photos.push(await importPhoto(f)); }
+    catch (err) { alert(`写真を読み込めませんでした（${f.name}）`); }
+  }
+  reportChanged();
+  renderReport();
+}
+
+// 長い辺が 1600px 以下になるよう縮めて取り込む（保存ファイルを軽くするため）
+function importPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, 1600 / Math.max(img.width, img.height));
+        const cv = document.createElement('canvas');
+        cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        resolve({ id: newId(), src: cv.toDataURL('image/jpeg', 0.85), w: cv.width, h: cv.height, strokes: [] });
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function drawPhotoThumb(cv, p) {
+  const img = await loadImg(p.src);
+  const s = 320 / Math.max(p.w, p.h);
+  cv.width = Math.round(p.w * s); cv.height = Math.round(p.h * s);
+  drawAnnotatedPhoto(cv.getContext('2d'), p, img, s);
+}
+
+function drawAnnotatedPhoto(c, p, img, s) {
+  c.drawImage(img, 0, 0, p.w * s, p.h * s);
+  c.save();
+  c.scale(s, s);
+  p.strokes.forEach(st => drawPhotoStroke(c, st));
+  c.restore();
+}
+
+async function annotatedPhotoDataUrl(p, maxPx) {
+  const img = await loadImg(p.src);
+  const s = Math.min(1, maxPx / Math.max(p.w, p.h));
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(p.w * s); cv.height = Math.round(p.h * s);
+  drawAnnotatedPhoto(cv.getContext('2d'), p, img, s);
+  return cv.toDataURL('image/jpeg', 0.88);
+}
+
+// 描き込み1つ分を描く。どんな写真の上でも見えるよう縁取りを付ける
+function drawPhotoStroke(c, s) {
+  const halo = s.color.toUpperCase() === '#FFFFFF' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.85)';
+  c.save();
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+  if (s.type === 'text') {
+    c.font = `bold ${s.size}px ${FONT_STACK}`;
+    c.textBaseline = 'middle';
+    c.lineWidth = s.size / 5;
+    c.strokeStyle = halo;
+    c.strokeText(s.text, s.x, s.y);
+    c.fillStyle = s.color;
+    c.fillText(s.text, s.x, s.y);
+  } else {
+    c.strokeStyle = halo; c.lineWidth = s.w * 1.8; strokePhotoPath(c, s);
+    c.strokeStyle = s.color; c.lineWidth = s.w; strokePhotoPath(c, s);
+  }
+  c.restore();
+}
+
+function strokePhotoPath(c, s) {
+  c.beginPath();
+  if (s.type === 'pen') {
+    s.pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y));
+    if (s.pts.length === 1) c.lineTo(s.pts[0][0] + 0.1, s.pts[0][1]);
+  } else if (s.type === 'rect') {
+    c.rect(Math.min(s.x1, s.x2), Math.min(s.y1, s.y2), Math.abs(s.x2 - s.x1), Math.abs(s.y2 - s.y1));
+  } else {
+    c.moveTo(s.x1, s.y1); c.lineTo(s.x2, s.y2);
+    if (s.type === 'arrow') {
+      const a = Math.atan2(s.y2 - s.y1, s.x2 - s.x1), L = s.w * 4;
+      c.moveTo(s.x2, s.y2); c.lineTo(s.x2 - L * Math.cos(a - 0.45), s.y2 - L * Math.sin(a - 0.45));
+      c.moveTo(s.x2, s.y2); c.lineTo(s.x2 - L * Math.cos(a + 0.45), s.y2 - L * Math.sin(a + 0.45));
+    }
+  }
+  c.stroke();
+}
+
+// ── 写真への描き込み画面 ──
+let photoEd = null;   // { areaId, photo, img, strokes, cur, tool, color, pointer, tap }
+
+function withLastStaff(r) {
+  Object.assign(r.basic, settings.lastStaff || {});
+  return r;
+}
+
+function initReport() {
+  report = withLastStaff(report);
+  const cv = document.getElementById('pe-canvas');
+  cv.addEventListener('pointerdown', peDown);
+  cv.addEventListener('pointermove', peMove);
+  cv.addEventListener('pointerup', peUp);
+  cv.addEventListener('pointercancel', () => { if (photoEd) { photoEd.pointer = null; photoEd.cur = null; peRedraw(); } });
+  document.getElementById('pe-tools').addEventListener('click', e => {
+    const b = e.target.closest('[data-tool]');
+    if (!b) return;
+    document.querySelectorAll('#pe-tools .pe-btn').forEach(x => x.classList.toggle('active', x === b));
+    if (photoEd) photoEd.tool = b.dataset.tool;
+  });
+  document.getElementById('pe-colors').addEventListener('click', e => {
+    const b = e.target.closest('[data-color]');
+    if (!b) return;
+    document.querySelectorAll('#pe-colors .pe-color').forEach(x => x.classList.toggle('active', x === b));
+    if (photoEd) photoEd.color = b.dataset.color;
+  });
+  window.addEventListener('resize', () => { if (photoEd) peLayout(); });
+}
+
+async function openPhotoEditor(areaId, index) {
+  const photo = areaData(areaId).photos[index];
+  photoEd = {
+    areaId, photo, img: await loadImg(photo.src), strokes: photo.strokes.map(s => ({ ...s })), cur: null,
+    tool: document.querySelector('#pe-tools .active').dataset.tool,
+    color: document.querySelector('#pe-colors .active').dataset.color,
+    pointer: null, tap: null,
+  };
+  document.getElementById('pe').classList.add('show');
+  peLayout();
+}
+
+function peLayout() {
+  const cv = document.getElementById('pe-canvas'), p = photoEd.photo;
+  cv.width = p.w; cv.height = p.h;
+  const stage = cv.parentElement;
+  const s = Math.min((stage.clientWidth - 20) / p.w, (stage.clientHeight - 20) / p.h);
+  cv.style.width = p.w * s + 'px';
+  cv.style.height = p.h * s + 'px';
+  peRedraw();
+}
+
+function peRedraw() {
+  const cv = document.getElementById('pe-canvas'), c = cv.getContext('2d');
+  c.clearRect(0, 0, cv.width, cv.height);
+  const strokes = photoEd.cur ? [...photoEd.strokes, photoEd.cur] : photoEd.strokes;
+  drawAnnotatedPhoto(c, { ...photoEd.photo, strokes }, photoEd.img, 1);
+}
+
+function pePoint(e) {
+  const cv = document.getElementById('pe-canvas'), r = cv.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height };
+}
+
+function peDown(e) {
+  if (!photoEd || photoEd.pointer !== null) return;   // 描いている間の2本目の指・手のひらは無視
+  photoEd.pointer = e.pointerId;
+  try { e.target.setPointerCapture(e.pointerId); } catch (err) { /* 取れなくても描ける */ }
+  const p = pePoint(e);
+  if (photoEd.tool === 'text') { photoEd.tap = p; return; }
+  const w = Math.max(3, photoEd.photo.w / 220);
+  photoEd.cur = photoEd.tool === 'pen'
+    ? { type: 'pen', color: photoEd.color, w, pts: [[p.x, p.y]] }
+    : { type: photoEd.tool, color: photoEd.color, w, x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+  peRedraw();
+}
+
+function peMove(e) {
+  if (!photoEd || e.pointerId !== photoEd.pointer || !photoEd.cur) return;
+  const p = pePoint(e), cur = photoEd.cur;
+  if (cur.type === 'pen') {
+    const last = cur.pts[cur.pts.length - 1];
+    if (Math.hypot(p.x - last[0], p.y - last[1]) < 2) return;
+    cur.pts.push([p.x, p.y]);
+  } else {
+    cur.x2 = p.x; cur.y2 = p.y;
+  }
+  peRedraw();
+}
+
+function peUp(e) {
+  if (!photoEd || e.pointerId !== photoEd.pointer) return;
+  photoEd.pointer = null;
+  if (photoEd.tap) {
+    const t = prompt('写真に書き込む文字（例: 手すり設置、段差15cm）:');
+    if (t && t.trim()) {
+      photoEd.strokes.push({ type: 'text', color: photoEd.color, size: Math.max(16, photoEd.photo.w / 22), x: photoEd.tap.x, y: photoEd.tap.y, text: t.trim() });
+    }
+    photoEd.tap = null;
+  } else if (photoEd.cur) {
+    const c = photoEd.cur;
+    if (c.type === 'pen' ? c.pts.length > 1 : Math.hypot(c.x2 - c.x1, c.y2 - c.y1) > 6) photoEd.strokes.push(c);
+    photoEd.cur = null;
+  }
+  peRedraw();
+}
+
+function peUndo() {
+  if (photoEd && photoEd.strokes.length) { photoEd.strokes.pop(); peRedraw(); }
+}
+
+function peClose(save) {
+  if (!photoEd) return;
+  if (save) { photoEd.photo.strokes = photoEd.strokes; reportChanged(); }
+  photoEd = null;
+  document.getElementById('pe').classList.remove('show');
+  renderReport();
+}
+
+function peMakeFirst() {
+  const list = areaData(photoEd.areaId).photos, i = list.indexOf(photoEd.photo);
+  if (i > 0) { list.splice(i, 1); list.unshift(photoEd.photo); }
+  peClose(true);
+}
+
+function peDeletePhoto() {
+  if (!photoEd || !confirm('この写真を削除しますか？')) return;
+  const list = areaData(photoEd.areaId).photos, i = list.indexOf(photoEd.photo);
+  if (i >= 0) list.splice(i, 1);
+  photoEd = null;
+  document.getElementById('pe').classList.remove('show');
+  reportChanged();
+  renderReport();
+}
+
+// ── 報告書の中身（ページごとの要素の並び）を作る ──
+const PAGE = { w: 8.27, h: 11.69, m: 0.4 };   // A4 縦（インチ）
+const FONT_STACK = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif';
+const PPT_FONT = 'Meiryo';
+const LINE_H = 1.35;
+const NO_LINE_START = '、。，．）」』】！？・ーぁぃぅぇぉっゃゅょァィゥェォッャュョ';
+const measureCtx = document.createElement('canvas').getContext('2d');
+
+function jpDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  return m ? `${+m[1]}年${+m[2]}月${+m[3]}日` : '　　年　　月　　日';
+}
+
+function staffText(b) {
+  return [['理学療法士', b.pt], ['作業療法士', b.ot], ['言語聴覚士', b.st], ['社会福祉士', b.sw]]
+    .filter(([, n]) => n && n.trim()).map(([role, n]) => `${role}：${n.trim()}`).join('　');
+}
+
+function houseText(b) {
+  const floors = String(b.floors || '').normalize('NFKC').trim(), live = String(b.liveFloor || '').normalize('NFKC').trim();
+  const parts = [];
+  if (b.tenure) parts.push(b.tenure);
+  if (b.building === '一戸建て') parts.push(floors ? (floors === '1' ? '一戸建て（平屋）' : `一戸建て（${floors}階建て）`) : '一戸建て');
+  if (b.building === 'マンション・アパート') {
+    const f = [live && `${live}階`, floors && `${floors}階建て`].filter(Boolean).join('／');
+    parts.push(`マンション・アパート${f ? `（${f}）` : ''}`);
+  }
+  return parts.join('・');
+}
+
+function measureSummary(def, a) {
+  const fixed = def.fields.map(f => {
+    const v = String(a.values[f.k] ?? '').trim();
+    if (!v) return '';
+    return f.type === 'num' ? `${f.label} ${v}${f.unit}` : `${f.label} ${v}`;
+  });
+  const extras = (a.extras || []).map(x => {
+    const v = String(x.value).trim();
+    return v ? `${x.label.trim() || '寸法'} ${v}${x.unit.trim()}` : '';
+  });
+  return [...fixed, ...extras].filter(Boolean).join('、');
+}
+
+function footerText() {
+  const s = settings;
+  const name = [s.org, s.hospital, s.dept].filter(v => v && v.trim()).map(v => v.trim()).join('　');
+  return [name, s.phone && s.phone.trim() && `TEL ${s.phone.trim()}`].filter(Boolean).join('　');
+}
+
+// 日本語は1文字ずつ折り返す（句読点は行頭に来ないようにする）。幅・大きさはポイント
+function wrapLines(text, widthPt, sizePt, bold) {
+  measureCtx.font = `${bold ? 'bold ' : ''}${sizePt}px ${FONT_STACK}`;
+  const lines = [];
+  for (const para of String(text ?? '').split('\n')) {
+    let line = '';
+    for (const ch of para) {
+      if (line && !NO_LINE_START.includes(ch) && measureCtx.measureText(line + ch).width > widthPt) { lines.push(line); line = ch; }
+      else line += ch;
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+function textBlockHeight(paras, wIn, pad) {
+  const inner = (wIn - pad * 2) * 72;
+  return paras.reduce((h, p) => h + wrapLines(p.text, inner, p.size, p.bold).length * p.size * LINE_H, 0) / 72 + pad * 2;
+}
+
+// 枠に収まるまで文字を小さくする（7pt まで）
+function fitParas(paras, wIn, hIn, pad) {
+  for (let k = 1; k > 0.5; k -= 0.05) {
+    const scaled = paras.map(p => ({ ...p, size: Math.max(7, Math.round(p.size * k * 2) / 2) }));
+    if (textBlockHeight(scaled, wIn, pad) <= hIn || scaled.every(p => p.size === 7)) return scaled;
+  }
+  return paras.map(p => ({ ...p, size: 7 }));
+}
+
+// 文字の要素。text は文字列か、段落の配列 [{ text, size, bold, color }]
+function T(x, y, w, h, text, size, o = {}) {
+  const paras = Array.isArray(text) ? text : [{ text, size, bold: o.bold, color: o.color }];
+  return { t: 'text', x, y, w, h, paras, align: o.align, valign: o.valign, fill: o.fill, line: o.line, pad: o.pad ?? 0.07 };
+}
+
+function fitBox(x, y, w, h, paras, o = {}) {
+  const e = T(x, y, w, h, paras, 0, o);
+  e.paras = fitParas(paras, w, h, e.pad);
+  return e;
+}
+
+const label = (x, y, w, text, color = '00B050') =>
+  T(x, y, w, 0.3, text, 10.5, { bold: true, color: 'FFFFFF', fill: color, valign: 'middle', pad: 0.08 });
+
+function imgContain(src, iw, ih, x, y, w, h) {
+  const s = Math.min(w / iw, h / ih), dw = iw * s, dh = ih * s;
+  return { t: 'img', src, x: x + (w - dw) / 2, y: y + (h - dh) / 2, w: dw, h: dh };
+}
+
+async function buildReportPages() {
+  const P = PAGE, m = P.m, cw = P.w - m * 2, b = report.basic;
+  const bottom = P.h - 0.6;   // フッターの上まで
+  const pages = [];
+
+  // ── 1枚目: 基本情報・間取り図・まとめ ──
+  const p1 = [];
+  p1.push({ t: 'rect', x: 0, y: 0, w: P.w, h: 0.95, fill: '00B050' });
+  p1.push(T(m, 0.12, cw, 0.72, `${b.name.trim() || '　　　　'}様宅　家屋調査報告書`, 22, { bold: true, color: 'FFFFFF', align: 'center', valign: 'middle' }));
+  const infoY = 1.1, infoH = 0.95, infoW = cw * 0.58;
+  p1.push(fitBox(m, infoY, infoW, infoH,
+    [{ text: `実施日：${jpDate(b.date)}`, size: 10.5 }, { text: staffText(b) || '担当：', size: 10.5 }], { line: 'A6A6A6' }));
+  p1.push(fitBox(m + infoW + 0.12, infoY, cw - infoW - 0.12, infoH,
+    [{ text: '＜自宅状況＞', size: 10.5, bold: true }, { text: houseText(b), size: 10.5 }], { line: 'A6A6A6' }));
+  const planY = infoY + infoH + 0.18, planH = 5.0;
+  p1.push(label(m, planY, cw, '間取り図'));
+  p1.push({ t: 'rect', x: m, y: planY + 0.3, w: cw, h: planH, line: 'A6A6A6' });
+  const plan = renderPlanImage({ grid: false, crop: true, scaleBar: calibrated });
+  if (plan) p1.push(imgContain(plan.toDataURL('image/png'), plan.width, plan.height, m + 0.08, planY + 0.38, cw - 0.16, planH - 0.16));
+  const sumY = planY + 0.3 + planH + 0.18, colW = (cw - 0.15) / 2, sumH = bottom - sumY - 0.3;
+  p1.push(label(m, sumY, colW, '問題点', 'ED7D31'));
+  // まとめが空欄なら、各場所の入力から自動でまとめる
+  p1.push(fitBox(m, sumY + 0.3, colW, sumH, [{ text: report.summary.problems.trim() || draftLines('problem'), size: 10 }], { line: 'A6A6A6' }));
+  p1.push(label(m + colW + 0.15, sumY, colW, '退院へ向けた取り組み', '2E75B6'));
+  p1.push(fitBox(m + colW + 0.15, sumY + 0.3, colW, sumH, [{ text: report.summary.actions.trim() || draftLines('plan'), size: 10 }], { line: 'A6A6A6' }));
+  pages.push(p1);
+
+  // ── 2枚目以降: 場所ごとの一覧表 ──
+  const COLS = [['場所', 1.05], ['評価', 0.75], ['現状・問題点', 2.25], ['改修案', 1.92], ['写真', 1.5]];
+  const rows = [];
+  for (const def of AREAS) {
+    if (!areaHasContent(def.id)) continue;
+    const a = report.areas[def.id];
+    rows.push({ def, a, photo: a.photos[0] ? await annotatedPhotoDataUrl(a.photos[0], 900) : null });
+  }
+  const notes = report.summary.notes.trim();
+  if (rows.length || notes) {
+    let page = null, y = 0;
+    const startPage = (cont, withCols) => {
+      page = [];
+      pages.push(page);
+      page.push({ t: 'rect', x: 0, y: 0, w: P.w, h: 0.6, fill: '00B050' });
+      page.push(T(m, 0.08, cw, 0.44, cont ? '各場所の評価（つづき）' : '各場所の評価', 15, { bold: true, color: 'FFFFFF', valign: 'middle' }));
+      y = 0.8;
+      if (withCols) {
+        let x = m;
+        for (const [title, w] of COLS) {
+          page.push(T(x, y, w, 0.3, title, 9, { bold: true, align: 'center', valign: 'middle', fill: 'E7E6E6', line: 'A6A6A6' }));
+          x += w;
+        }
+        y += 0.3;
+      }
+    };
+    startPage(false, rows.length > 0);
+    for (const r of rows) {
+      const meas = measureSummary(r.def, r.a), problem = r.a.problem.trim();
+      const probParas = [meas && { text: meas, size: 8.5, color: '595959' }, problem && { text: problem, size: 9.5 }].filter(Boolean);
+      if (!probParas.length) probParas.push({ text: '―', size: 9.5, color: '7F7F7F' });
+      const planParas = [{ text: r.a.plan.trim() || '―', size: 9.5, color: r.a.plan.trim() ? '000000' : '7F7F7F' }];
+      const rowH = Math.min(bottom - 1.2, Math.max(r.photo ? 1.2 : 0.7,
+        textBlockHeight(probParas, COLS[2][1], 0.07), textBlockHeight(planParas, COLS[3][1], 0.07),
+        textBlockHeight([{ text: r.def.title, size: 10, bold: true }], COLS[0][1], 0.07)));
+      if (y + rowH > bottom) startPage(true, true);
+      let x = m;
+      page.push(T(x, y, COLS[0][1], rowH, r.def.title, 10, { bold: true, valign: 'middle', line: 'A6A6A6' }));
+      x += COLS[0][1];
+      const ev = EVALS.find(e => e.v === r.a.eval);
+      page.push(T(x, y, COLS[1][1], rowH, ev ? ev.v : '―', 9.5,
+        { bold: !!ev, align: 'center', valign: 'middle', color: ev ? ev.fg : '7F7F7F', fill: ev ? ev.bg : undefined, line: 'A6A6A6' }));
+      x += COLS[1][1];
+      page.push(fitBox(x, y, COLS[2][1], rowH, probParas, { line: 'A6A6A6' }));
+      x += COLS[2][1];
+      page.push(fitBox(x, y, COLS[3][1], rowH, planParas, { line: 'A6A6A6' }));
+      x += COLS[3][1];
+      page.push({ t: 'rect', x, y, w: COLS[4][1], h: rowH, line: 'A6A6A6' });
+      if (r.photo) {
+        const p0 = r.a.photos[0];
+        page.push(imgContain(r.photo, p0.w, p0.h, x + 0.05, y + 0.05, COLS[4][1] - 0.1, rowH - 0.1));
+      }
+      y += rowH;
+    }
+    if (notes) {
+      const paras = [{ text: notes, size: 9.5 }];
+      const h = Math.min(bottom - 1.2, textBlockHeight(paras, cw, 0.07));
+      if (y + 0.2 + 0.3 + h > bottom) startPage(true, false);
+      else y += 0.2;
+      page.push(label(m, y, cw, '特記事項', '7F7F7F'));
+      page.push(fitBox(m, y + 0.3, cw, h, paras, { line: 'A6A6A6' }));
+    }
+  }
+
+  // ── 写真ページ（各場所の2枚目以降、1ページに6枚）──
+  const extras = [];
+  for (const def of AREAS) {
+    const a = report.areas[def.id];
+    if (a) a.photos.slice(1).forEach((p, i) => extras.push({ title: `${def.title}（${i + 2}）`, p }));
+  }
+  const cellW = (cw - 0.2) / 2, imgH = 2.75, cellH = imgH + 0.35;
+  for (let i = 0; i < extras.length; i += 6) {
+    const page = [];
+    pages.push(page);
+    page.push({ t: 'rect', x: 0, y: 0, w: P.w, h: 0.6, fill: '00B050' });
+    page.push(T(m, 0.08, cw, 0.44, '写真', 15, { bold: true, color: 'FFFFFF', valign: 'middle' }));
+    for (let j = 0; j < 6 && i + j < extras.length; j++) {
+      const { title, p } = extras[i + j];
+      const x = m + (j % 2) * (cellW + 0.2), y = 0.8 + Math.floor(j / 2) * (cellH + 0.15);
+      page.push({ t: 'rect', x, y, w: cellW, h: imgH, line: 'D0D0D0' });
+      page.push(imgContain(await annotatedPhotoDataUrl(p, 1200), p.w, p.h, x + 0.04, y + 0.04, cellW - 0.08, imgH - 0.08));
+      page.push(T(x, y + imgH, cellW, 0.3, title, 9, { color: '404040' }));
+    }
+  }
+
+  // フッター（施設名・電話番号・ページ番号）
+  const foot = footerText();
+  pages.forEach((page, i) => {
+    if (foot) page.push(T(m, P.h - 0.5, cw - 0.9, 0.3, foot, 8, { color: '7F7F7F' }));
+    page.push(T(P.w - m - 0.9, P.h - 0.5, 0.9, 0.3, `${i + 1} / ${pages.length}`, 8, { color: '7F7F7F', align: 'right' }));
+  });
+  return pages;
+}
+
+// ── 画面・PDF 用にページを描く ──
+async function renderPageCanvas(page, dpi) {
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(PAGE.w * dpi); cv.height = Math.round(PAGE.h * dpi);
+  const c = cv.getContext('2d');
+  c.fillStyle = '#FFFFFF';
+  c.fillRect(0, 0, cv.width, cv.height);
+  for (const e of page) {
+    if (e.t === 'img') {
+      c.drawImage(await loadImg(e.src), e.x * dpi, e.y * dpi, e.w * dpi, e.h * dpi);
+      continue;
+    }
+    if (e.fill) { c.fillStyle = '#' + e.fill; c.fillRect(e.x * dpi, e.y * dpi, e.w * dpi, e.h * dpi); }
+    if (e.line) { c.strokeStyle = '#' + e.line; c.lineWidth = Math.max(1, dpi / 96); c.strokeRect(e.x * dpi, e.y * dpi, e.w * dpi, e.h * dpi); }
+    if (e.t === 'text') drawTextElement(c, e, dpi);
+  }
+  return cv;
+}
+
+function drawTextElement(c, e, dpi) {
+  const pad = e.pad, inner = (e.w - pad * 2) * 72;
+  const blocks = e.paras.map(p => ({ p, lines: wrapLines(p.text, inner, p.size, p.bold) }));
+  const total = blocks.reduce((t, b) => t + b.lines.length * b.p.size * LINE_H, 0);
+  let yPt = e.valign === 'middle' ? Math.max(pad * 72, (e.h * 72 - total) / 2) : pad * 72;
+  c.save();
+  c.beginPath();
+  c.rect(e.x * dpi, e.y * dpi, e.w * dpi, e.h * dpi);
+  c.clip();
+  c.textAlign = e.align || 'left';
+  const x = e.align === 'center' ? (e.x + e.w / 2) * dpi : e.align === 'right' ? (e.x + e.w - pad) * dpi : (e.x + pad) * dpi;
+  for (const { p, lines } of blocks) {
+    c.font = `${p.bold ? 'bold ' : ''}${p.size * dpi / 72}px ${FONT_STACK}`;
+    c.fillStyle = '#' + (p.color || '000000');
+    for (const line of lines) {
+      const lh = p.size * LINE_H;
+      c.fillText(line, x, e.y * dpi + (yPt + lh * 0.8) * dpi / 72);
+      yPt += lh;
+    }
+  }
+  c.restore();
+}
+
+let previewToken = 0;
+async function renderPreview(container) {
+  const token = ++previewToken;
+  container.replaceChildren(el('div', { class: 'rp-hint' }, 'プレビューを作っています…'));
+  try {
+    const pages = await buildReportPages();
+    const canvases = [];
+    for (const page of pages) {
+      if (token !== previewToken) return;
+      const cv = await renderPageCanvas(page, 72);
+      cv.addEventListener('click', () => cv.classList.toggle('big'));
+      canvases.push(cv);
+    }
+    if (token === previewToken) container.replaceChildren(...canvases);
+  } catch (err) {
+    container.replaceChildren(el('div', { class: 'rp-hint' }, 'プレビューを作れませんでした：' + err.message));
+  }
+}
+
+// ── PowerPoint・PDF を作る（部品は必要なときにネットから読み込む）──
+const LIBS = {
+  pptx: { src: 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
+          sri: 'sha384-Cck14aA9cifjYolcnjebXRfWGkz5ltHMBiG4px/j8GS+xQcb7OhNQWZYyWjQ+UwQ', ready: () => window.PptxGenJS },
+  pdf:  { src: 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+          sri: 'sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk', ready: () => window.jspdf },
+};
+const libLoading = {};
+
+function loadLib(name) {
+  const lib = LIBS[name];
+  if (lib.ready()) return Promise.resolve();
+  if (!libLoading[name]) {
+    libLoading[name] = new Promise((resolve, reject) => {
+      const sc = document.createElement('script');
+      sc.src = lib.src;
+      sc.integrity = lib.sri;
+      sc.crossOrigin = 'anonymous';
+      sc.onload = () => resolve();
+      sc.onerror = () => { delete libLoading[name]; sc.remove(); reject(new Error('部品を読み込めませんでした')); };
+      document.head.append(sc);
+    });
+  }
+  return libLoading[name];
+}
+
+async function exportReport(kind, status) {
+  status.textContent = '作成中です…';
+  try {
+    const pages = await buildReportPages();
+    const name = safeFileName(`家屋調査報告書_${report.basic.name.trim() || '氏名未入力'}様_${report.basic.date || todayStr()}`);
+    if (kind === 'pptx') await exportPptx(pages, name + '.pptx');
+    else await exportPdf(pages, name + '.pdf');
+    status.textContent = `作成しました（${pages.length}ページ）。iPad では「ファイル」アプリの「ダウンロード」に入ります。`;
+  } catch (err) {
+    status.textContent = navigator.onLine
+      ? '作成できませんでした：' + err.message
+      : 'インターネットにつながっていないため作成できませんでした。つながる場所でもう一度お試しください。';
+  }
+}
+
+async function exportPptx(pages, filename) {
+  await loadLib('pptx');
+  const pptx = new window.PptxGenJS();
+  pptx.defineLayout({ name: 'A4P', width: PAGE.w, height: PAGE.h });
+  pptx.layout = 'A4P';
+  for (const page of pages) {
+    const slide = pptx.addSlide();
+    for (const e of page) {
+      const geo = { x: e.x, y: e.y, w: e.w, h: e.h };
+      const fill = e.fill ? { color: e.fill } : undefined;
+      const line = e.line ? { color: e.line, width: 0.75 } : undefined;
+      if (e.t === 'img') {
+        slide.addImage({ data: e.src, ...geo });
+      } else if (e.t === 'rect') {
+        slide.addShape(pptx.ShapeType.rect, { ...geo, fill: fill || { type: 'none' }, line: line || { type: 'none' } });
+      } else {
+        const runs = e.paras.map((p, i) => ({
+          text: p.text, options: { fontSize: p.size, bold: !!p.bold, color: p.color || '000000', breakLine: i < e.paras.length - 1 },
+        }));
+        slide.addText(runs, {
+          ...geo, fill, line, fontFace: PPT_FONT, align: e.align || 'left', valign: e.valign || 'top',
+          margin: e.pad * 72, paraSpaceBefore: 0, paraSpaceAfter: 0, fit: 'none',
+        });
+      }
+    }
+  }
+  downloadBlob(await pptx.write({ outputType: 'blob' }), filename);
+}
+
+async function exportPdf(pages, filename) {
+  await loadLib('pdf');
+  const doc = new window.jspdf.jsPDF({ unit: 'in', format: [PAGE.w, PAGE.h], orientation: 'portrait' });
+  for (let i = 0; i < pages.length; i++) {
+    if (i) doc.addPage([PAGE.w, PAGE.h], 'portrait');
+    const cv = await renderPageCanvas(pages[i], 170);
+    doc.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, PAGE.w, PAGE.h);
+  }
+  downloadBlob(doc.output('blob'), filename);
 }
 </script>
 </body>
