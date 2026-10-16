@@ -3149,12 +3149,12 @@ async function buildReportPages() {
   pages.push(p1);
 
   // ── 2枚目以降: 場所ごとの一覧表 ──
-  const COLS = [['場所', 1.05], ['評価', 0.75], ['現状・問題点', 2.25], ['改修案', 1.92], ['写真', 1.5]];
+  const COLS = [['場所', 0.85], ['評価', 0.7], ['現状・問題点', 1.85], ['改修案', 1.57], ['写真', 2.5]];
   const rows = [];
   for (const def of AREAS) {
     if (!areaHasContent(def.id)) continue;
     const a = report.areas[def.id];
-    rows.push({ def, a, photo: a.photos[0] ? await annotatedPhotoDataUrl(a.photos[0], 900) : null });
+    rows.push({ def, a, photo: a.photos[0] ? await annotatedPhotoDataUrl(a.photos[0], 1400) : null });
   }
   const notes = report.summary.notes.trim();
   if (rows.length || notes) {
@@ -3180,7 +3180,7 @@ async function buildReportPages() {
       const probParas = [meas && { text: meas, size: 8.5, color: '595959' }, problem && { text: problem, size: 9.5 }].filter(Boolean);
       if (!probParas.length) probParas.push({ text: '―', size: 9.5, color: '7F7F7F' });
       const planParas = [{ text: r.a.plan.trim() || '―', size: 9.5, color: r.a.plan.trim() ? '000000' : '7F7F7F' }];
-      const rowH = Math.min(bottom - 1.2, Math.max(r.photo ? 1.2 : 0.7,
+      const rowH = Math.min(bottom - 1.2, Math.max(r.photo ? 1.9 : 0.7,
         textBlockHeight(probParas, COLS[2][1], 0.07), textBlockHeight(planParas, COLS[3][1], 0.07),
         textBlockHeight([{ text: r.def.title, size: 10, bold: true }], COLS[0][1], 0.07)));
       if (y + rowH > bottom) startPage(true, true);
